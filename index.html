@@ -1,860 +1,1885 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>AI in Daily Life — Interactive 3D Showcase</title>
-<meta name="description" content="An interactive 3D website exploring how Artificial Intelligence is used in everyday life: smart home, healthcare, education, transportation and finance." />
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>" />
-
+<title>ปัญญาประดิษฐ์ในชีวิตประจำวัน | AI in Daily Life</title>
+<meta name="description" content="เว็บไซต์ 3 มิติแบบอินเทอร์แอกทีฟ สำรวจการประยุกต์ใช้ปัญญาประดิษฐ์ในชีวิตประจำวัน ทั้งบ้านอัจฉริยะ การแพทย์ การศึกษา การขนส่ง การเงิน และความบันเทิง" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
-  /* ============================================================
-     AI IN DAILY LIFE — single file, no build step
-     ============================================================ */
-  :root {
-    --bg: #05070f;
-    --bg-2: #090d1c;
-    --panel: rgba(14, 19, 38, 0.72);
-    --panel-solid: #0d1124;
-    --line: rgba(120, 160, 255, 0.16);
-    --text: #e8ecff;
-    --muted: #97a1c4;
-    --accent: #4ff2ff;
-    --accent-2: #7dff9b;
-    --radius: 18px;
-    --header-h: 68px;
-    --shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+/* ============================================================
+   ปัญญาประดิษฐ์ในชีวิตประจำวัน — AI IN DAILY LIFE
+   Single-file website · Vanilla CSS + JS · Three.js via CDN
+   Theme: dark futuristic #05060f · cyan #22d3ee · purple #a855f7
+   ============================================================ */
+:root {
+  --bg: #05060f;
+  --bg-2: #0a0c1d;
+  --bg-3: #0e1230;
+  --panel: rgba(17, 22, 46, 0.62);
+  --panel-solid: #0d1126;
+  --line: rgba(130, 165, 255, 0.16);
+  --line-soft: rgba(130, 165, 255, 0.10);
+  --text: #eef1ff;
+  --muted: #9aa3c7;
+  --muted-2: #6f78a3;
+  --cyan: #22d3ee;
+  --cyan-soft: #67e8f9;
+  --purple: #a855f7;
+  --purple-soft: #c084fc;
+  --green: #34d399;
+  --amber: #fbbf24;
+  --pink: #f472b6;
+  --radius: 20px;
+  --radius-sm: 14px;
+  --header-h: 70px;
+  --shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+  --font-thai: "Noto Sans Thai", "Space Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-en: "Space Grotesk", "Noto Sans Thai", system-ui, sans-serif;
+}
+* {
+  box-sizing: border-box;
+}
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+}
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  background-image:
+    radial-gradient(1100px 620px at 78% -8%, rgba(168, 85, 247, 0.16) 0%, transparent 60%),
+    radial-gradient(1000px 640px at 8% 12%, rgba(34, 211, 238, 0.12) 0%, transparent 58%),
+    radial-gradient(900px 700px at 50% 110%, rgba(76, 29, 149, 0.22) 0%, transparent 60%);
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: var(--font-thai);
+  line-height: 1.75;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+::selection {
+  background: var(--cyan);
+  color: #04060f;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+img {
+  max-width: 100%;
+  display: block;
+}
+button {
+  font-family: inherit;
+}
+/* ---------------- เส้นเรืองแสงด้านบน ---------------- */
+.top-glow-line {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 120;
+  background: linear-gradient(90deg, transparent, var(--cyan) 20%, var(--purple) 50%, var(--cyan) 80%, transparent);
+  opacity: 0.9;
+}
+/* ---------------- พื้นหลัง 3D ---------------- */
+#bg3d {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+#bg3d canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+#bg3d.interactive {
+  pointer-events: auto;
+}
+#bg3d-vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(5, 6, 15, 0.15) 0%, transparent 22%, transparent 62%, rgba(5, 6, 15, 0.88) 100%);
+}
+/* ---------------- โครงหน้า ---------------- */
+.wrap {
+  width: min(1200px, 92vw);
+  margin: 0 auto;
+}
+main {
+  position: relative;
+  z-index: 3;
+  pointer-events: none;
+}
+main .eyebrow,
+main h1,
+main h2,
+main h3,
+main h4,
+main p,
+main .lead,
+main .hero-actions,
+main .hero-meta,
+main .section-head,
+main .card,
+main .stat,
+main .timeline-card,
+main .faq-item,
+main .footnote,
+main .panel,
+main .m-actions,
+main .filter-bar,
+main .marquee {
+  pointer-events: auto;
+}
+section {
+  scroll-margin-top: calc(var(--header-h) + 14px);
+  position: relative;
+}
+/* ---------------- ป้ายหมวด ---------------- */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--cyan-soft);
+  background: rgba(34, 211, 238, 0.08);
+  border: 1px solid rgba(34, 211, 238, 0.30);
+  padding: 7px 16px;
+  border-radius: 999px;
+  margin-bottom: 18px;
+}
+.eyebrow .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 12px var(--cyan);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(0.65); opacity: 0.5; }
+}
+.eyebrow.purple {
+  color: var(--purple-soft);
+  background: rgba(168, 85, 247, 0.10);
+  border-color: rgba(168, 85, 247, 0.34);
+}
+.eyebrow.purple .dot {
+  background: var(--purple);
+  box-shadow: 0 0 12px var(--purple);
+}
+h1,
+h2,
+h3 {
+  line-height: 1.35;
+  margin: 0 0 0.5em;
+  letter-spacing: 0;
+}
+h2 {
+  font-size: clamp(1.65rem, 3.4vw, 2.5rem);
+  font-weight: 800;
+}
+h2 .grad {
+  background: linear-gradient(100deg, var(--cyan-soft), var(--purple-soft));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.section-head {
+  max-width: 700px;
+  margin-bottom: 40px;
+}
+.section-head p {
+  color: var(--muted);
+  margin: 0;
+  font-size: 1.02rem;
+}
+.section-index {
+  font-family: var(--font-en);
+  font-size: 0.78rem;
+  letter-spacing: 0.28em;
+  color: var(--muted-2);
+  display: block;
+  margin-bottom: 10px;
+}
+/* ---------------- ส่วนหัวเว็บ ---------------- */
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-h);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  background: rgba(5, 6, 15, 0.66);
+  border-bottom: 1px solid var(--line-soft);
+}
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: min(1200px, 92vw);
+  margin: 0 auto;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  font-size: 1.02rem;
+}
+.logo .mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(140deg, var(--cyan), var(--purple));
+  color: #04060f;
+  font-size: 1.05rem;
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.55);
+}
+.logo small {
+  display: block;
+  font-size: 0.64rem;
+  color: var(--muted);
+  letter-spacing: 0.2em;
+  font-weight: 500;
+  font-family: var(--font-en);
+}
+nav ul {
+  display: flex;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+nav a {
+  display: block;
+  padding: 9px 16px;
+  border-radius: 999px;
+  font-size: 0.93rem;
+  color: var(--muted);
+  transition: color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+}
+nav a:hover {
+  color: var(--text);
+  background: rgba(130, 165, 255, 0.10);
+}
+nav a.active {
+  color: var(--cyan-soft);
+  background: rgba(34, 211, 238, 0.10);
+  box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.35);
+}
+.nav-toggle {
+  display: none;
+  width: 44px;
+  height: 40px;
+  border-radius: 11px;
+  background: rgba(130, 165, 255, 0.10);
+  border: 1px solid var(--line);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 1.15rem;
+}
+/* ---------------- ปุ่ม ---------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 14px 26px;
+  border-radius: 999px;
+  font-size: 0.96rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: transform 0.22s ease, box-shadow 0.25s ease, background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.btn:active {
+  transform: translateY(1px) scale(0.985);
+}
+.btn:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+}
+.btn-primary {
+  background: linear-gradient(120deg, var(--cyan) 0%, #38bdf8 45%, var(--purple) 100%);
+  color: #04060f;
+  box-shadow: 0 10px 34px rgba(34, 211, 238, 0.35);
+}
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 42px rgba(34, 211, 238, 0.5), 0 6px 26px rgba(168, 85, 247, 0.35);
+}
+.btn-ghost {
+  background: rgba(130, 165, 255, 0.07);
+  border-color: var(--line);
+  color: var(--text);
+  font-weight: 600;
+}
+.btn-ghost:hover {
+  transform: translateY(-3px);
+  border-color: var(--cyan);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+  color: var(--cyan-soft);
+}
+.btn-ghost.on {
+  border-color: var(--cyan);
+  color: var(--cyan-soft);
+  background: rgba(34, 211, 238, 0.12);
+}
+/* ---------------- ฮีโร่ ---------------- */
+.hero {
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  padding: calc(var(--header-h) + 44px) 0 80px;
+}
+.hero-inner {
+  max-width: 660px;
+}
+.hero h1 {
+  font-size: clamp(2.4rem, 6.6vw, 4.4rem);
+  font-weight: 800;
+  line-height: 1.22;
+  background: linear-gradient(100deg, #ffffff 10%, var(--cyan-soft) 52%, var(--purple-soft) 92%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  text-shadow: 0 0 70px rgba(34, 211, 238, 0.22);
+  margin-bottom: 16px;
+}
+.hero h1 .thai-big {
+  display: block;
+}
+.hero .en-sub {
+  font-family: var(--font-en);
+  font-size: clamp(0.95rem, 2vw, 1.15rem);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: block;
+  margin-top: 12px;
+  -webkit-text-fill-color: var(--muted);
+}
+.hero p.lead {
+  font-size: clamp(1rem, 2.1vw, 1.14rem);
+  color: var(--muted);
+  margin: 0 0 30px;
+  max-width: 58ch;
+}
+.hero p.lead strong {
+  color: var(--text);
+  font-weight: 700;
+}
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 13px;
+  margin-bottom: 30px;
+}
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.chip {
+  font-size: 0.8rem;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 7px 14px;
+  background: rgba(10, 13, 30, 0.62);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.chip i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 10px var(--green);
+  font-style: normal;
+  animation: pulse-dot 2.2s ease-in-out infinite;
+}
+.chip.cy i {
+  background: var(--cyan);
+  box-shadow: 0 0 10px var(--cyan);
+}
+.chip.pu i {
+  background: var(--purple);
+  box-shadow: 0 0 10px var(--purple);
+}
+.hero-side-hint {
+  margin-top: 26px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted-2);
+  font-size: 0.84rem;
+}
+.hero-side-hint .mouse {
+  width: 24px;
+  height: 38px;
+  border: 1.5px solid var(--muted-2);
+  border-radius: 14px;
+  position: relative;
+  flex: 0 0 auto;
+}
+.hero-side-hint .mouse::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 7px;
+  width: 4px;
+  height: 8px;
+  margin-left: -2px;
+  border-radius: 4px;
+  background: var(--cyan);
+  animation: wheel 1.8s ease-in-out infinite;
+}
+@keyframes wheel {
+  0% { transform: translateY(0); opacity: 1; }
+  70% { transform: translateY(10px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 0; }
+}
+.scroll-hint {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  opacity: 0.85;
+  font-family: var(--font-en);
+}
+.scroll-hint span.line {
+  width: 1px;
+  height: 36px;
+  background: linear-gradient(var(--cyan), transparent);
+  animation: drop-line 1.8s ease-in-out infinite;
+}
+@keyframes drop-line {
+  0% { transform: scaleY(0.2); transform-origin: top; }
+  50% { transform: scaleY(1); transform-origin: top; }
+  100% { transform: scaleY(0.2); transform-origin: bottom; }
+}
+/* ---------------- แถบวิ่ง ---------------- */
+.marquee-band {
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+  background: rgba(9, 12, 28, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  overflow: hidden;
+  padding: 13px 0;
+}
+.marquee {
+  display: flex;
+  gap: 38px;
+  width: max-content;
+  animation: marquee 30s linear infinite;
+  font-size: 0.88rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.marquee span b {
+  color: var(--cyan-soft);
+  font-weight: 700;
+}
+@keyframes marquee {
+  to { transform: translateX(-50%); }
+}
+/* ---------------- การ์ดแอปพลิเคชัน ---------------- */
+.apps-section {
+  padding: 92px 0 24px;
+}
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 26px;
+}
+.filter-btn {
+  padding: 9px 18px;
+  border-radius: 999px;
+  font-size: 0.87rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: rgba(130, 165, 255, 0.06);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  transition: all 0.25s ease;
+}
+.filter-btn:hover {
+  color: var(--text);
+  border-color: var(--cyan);
+}
+.filter-btn.active {
+  color: #04060f;
+  background: linear-gradient(120deg, var(--cyan), var(--purple-soft));
+  border-color: transparent;
+  box-shadow: 0 6px 22px rgba(34, 211, 238, 0.35);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 22px;
+}
+.card {
+  position: relative;
+  background: linear-gradient(165deg, rgba(22, 28, 58, 0.78), rgba(9, 12, 26, 0.82));
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 28px 24px 24px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  isolation: isolate;
+}
+/* เส้นไล่สีด้านบนของการ์ด */
+.card::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--card-color, var(--cyan)) 30%, var(--card-color-2, var(--purple)) 70%, transparent);
+  opacity: 0.85;
+}
+/* แสงสะท้อนเวลาชี้ */
+.card .sweep {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -70%;
+  width: 55%;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.14), transparent);
+  transform: skewX(-18deg);
+  transition: left 0.7s ease;
+  z-index: 1;
+  pointer-events: none;
+}
+.card:hover .sweep,
+.card:focus-visible .sweep {
+  left: 130%;
+}
+/* แสงตามเมาส์ */
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(360px 210px at var(--mx, 50%) var(--my, 0%), var(--card-color, var(--cyan)), transparent 62%);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  z-index: 0;
+}
+.card:hover,
+.card:focus-visible {
+  transform: translateY(-10px);
+  border-color: var(--card-color, var(--cyan));
+  box-shadow: 0 26px 54px rgba(0, 0, 0, 0.6), 0 0 36px rgba(34, 211, 238, 0.14);
+  outline: none;
+}
+.card:hover::before,
+.card:focus-visible::before {
+  opacity: 0.22;
+}
+.card > * {
+  position: relative;
+  z-index: 2;
+}
+.card-icon {
+  font-size: 2.1rem;
+  line-height: 1;
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  border-radius: 17px;
+  margin-bottom: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--line);
+  box-shadow: inset 0 0 24px rgba(255, 255, 255, 0.04), 0 0 26px rgba(34, 211, 238, 0.12);
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.card:hover .card-icon,
+.card:focus-visible .card-icon {
+  transform: translateY(-4px) scale(1.1) rotate(-6deg);
+}
+.card-en {
+  font-family: var(--font-en);
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--card-color, var(--cyan));
+  opacity: 0.95;
+  display: block;
+  margin-bottom: 4px;
+}
+.card h3 {
+  font-size: 1.32rem;
+  font-weight: 800;
+  margin: 0 0 8px;
+}
+.card p.desc {
+  color: var(--muted);
+  font-size: 0.93rem;
+  margin: 0 0 16px;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.meta-row span {
+  font-size: 0.74rem;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: rgba(130, 165, 255, 0.08);
+  border: 1px solid var(--line-soft);
+  color: var(--muted);
+}
+.meta-row span.hot {
+  color: var(--card-color, var(--cyan));
+  border-color: var(--card-color, var(--cyan));
+  background: rgba(255, 255, 255, 0.04);
+}
+.card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-top: 1px dashed var(--line);
+  padding-top: 15px;
+}
+.card-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.87rem;
+  font-weight: 700;
+  color: var(--card-color, var(--cyan));
+  opacity: 0.75;
+  transform: translateX(-4px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.card:hover .card-go {
+  opacity: 1;
+  transform: translateX(0);
+}
+.card-num {
+  font-family: var(--font-en);
+  font-size: 0.78rem;
+  color: var(--muted-2);
+  letter-spacing: 0.18em;
+}
+/* ---------------- ตัวเลขผลกระทบ ---------------- */
+.impact-section {
+  padding: 88px 0 20px;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 18px;
+  margin-top: 6px;
+}
+.stat {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 28px 22px;
+  text-align: center;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+.stat::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cyan), var(--purple), transparent);
+  opacity: 0.6;
+}
+.stat:hover {
+  transform: translateY(-6px);
+  border-color: rgba(34, 211, 238, 0.42);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5), 0 0 28px rgba(34, 211, 238, 0.16);
+}
+.stat .num {
+  font-size: clamp(2rem, 4.4vw, 2.8rem);
+  font-weight: 800;
+  font-family: var(--font-en);
+  background: linear-gradient(120deg, var(--cyan-soft), var(--purple-soft));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  display: block;
+  line-height: 1.1;
+}
+.stat .label {
+  color: var(--muted);
+  font-size: 0.88rem;
+  display: block;
+  margin-top: 8px;
+}
+.footnote {
+  color: var(--muted-2);
+  font-size: 0.78rem;
+  margin-top: 18px;
+}
+/* ---------------- ไทม์ไลน์หนึ่งวัน ---------------- */
+.day-section {
+  padding: 88px 0 20px;
+}
+.timeline {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 18px;
+}
+.timeline-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 24px 22px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.timeline-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(168, 85, 247, 0.45);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
+}
+.timeline-card .time {
+  font-family: var(--font-en);
+  font-size: 0.76rem;
+  letter-spacing: 0.2em;
+  color: var(--purple-soft);
+  font-weight: 700;
+}
+.timeline-card h3 {
+  font-size: 1.06rem;
+  margin: 8px 0 8px;
+}
+.timeline-card p {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+/* ---------------- คำถามพบบ่อย ---------------- */
+.faq-section {
+  padding: 88px 0 20px;
+}
+.faq-list {
+  display: grid;
+  gap: 14px;
+  max-width: 820px;
+}
+.faq-item {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.faq-q {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px 20px;
+  background: transparent;
+  border: 0;
+  color: var(--text);
+  font-size: 0.99rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: start;
+}
+.faq-q .plus {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  color: var(--cyan-soft);
+  transition: transform 0.3s ease;
+}
+.faq-item.open .faq-q .plus {
+  transform: rotate(45deg);
+}
+.faq-a {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease;
+}
+.faq-a p {
+  margin: 0;
+  padding: 0 20px 20px;
+  color: var(--muted);
+  font-size: 0.93rem;
+}
+/* ---------------- เกี่ยวกับ ---------------- */
+.about-section {
+  padding: 88px 0 40px;
+}
+.about-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 26px;
+  align-items: start;
+}
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 28px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  position: relative;
+  overflow: hidden;
+}
+.panel::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cyan), var(--purple), transparent);
+  opacity: 0.55;
+}
+.panel h3 {
+  font-size: 1.08rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.panel p {
+  color: var(--muted);
+  font-size: 0.94rem;
+  margin: 0 0 10px;
+}
+.panel p:last-child {
+  margin-bottom: 0;
+}
+.stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 16px;
+}
+.stack span {
+  font-size: 0.76rem;
+  padding: 6px 12px;
+  border-radius: 9px;
+  background: rgba(130, 165, 255, 0.09);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-family: var(--font-en);
+}
+.checklist {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.checklist li {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+.checklist li b {
+  color: var(--text);
+  font-weight: 700;
+}
+.checklist .tick {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(52, 211, 153, 0.14);
+  border: 1px solid rgba(52, 211, 153, 0.45);
+  color: var(--green);
+  font-size: 0.72rem;
+  display: grid;
+  place-items: center;
+  margin-top: 3px;
+}
+/* ---------------- ส่วนท้าย ---------------- */
+footer {
+  position: relative;
+  z-index: 3;
+  margin-top: 90px;
+  border-top: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(9, 13, 28, 0.55), rgba(5, 6, 15, 0.96));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 56px 0 34px;
+}
+.foot-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.foot-grid p {
+  color: var(--muted);
+  font-size: 0.9rem;
+  max-width: 380px;
+  margin: 10px 0 0;
+}
+.foot-links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.foot-links strong {
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-family: var(--font-en);
+}
+.foot-links a {
+  color: var(--muted);
+  font-size: 0.9rem;
+  transition: color 0.2s ease, transform 0.2s ease;
+  width: fit-content;
+}
+.foot-links a:hover {
+  color: var(--cyan-soft);
+  transform: translateX(4px);
+}
+.copyright {
+  margin-top: 34px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line-soft);
+  color: var(--muted-2);
+  font-size: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+/* ---------------- หน้าต่างรายละเอียด ---------------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(3, 5, 12, 0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.28s ease, visibility 0.28s;
+}
+.modal-backdrop.open {
+  opacity: 1;
+  visibility: visible;
+}
+.modal {
+  width: min(660px, 100%);
+  max-height: 86vh;
+  overflow-y: auto;
+  background: linear-gradient(165deg, #141a38, #0a0d1e);
+  border: 1px solid var(--modal-color, var(--cyan));
+  border-radius: 22px;
+  padding: 34px 32px 30px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+  transform: translateY(26px) scale(0.97);
+  opacity: 0;
+  transition: transform 0.32s cubic-bezier(0.2, 0.9, 0.25, 1), opacity 0.32s ease;
+  position: relative;
+  pointer-events: auto;
+}
+.modal-backdrop.open .modal {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+.modal .m-icon {
+  font-size: 2.6rem;
+}
+.modal h3 {
+  font-size: 1.6rem;
+  margin: 10px 0 4px;
+}
+.modal .m-en {
+  font-family: var(--font-en);
+  font-size: 0.74rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--modal-color, var(--cyan));
+  display: block;
+}
+.modal p.m-desc {
+  color: var(--muted);
+  font-size: 0.97rem;
+}
+.modal h4 {
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+  color: var(--text);
+  margin: 24px 0 12px;
+}
+.m-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.m-list li {
+  background: rgba(130, 165, 255, 0.06);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--modal-color, var(--cyan));
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.m-list li b {
+  color: var(--text);
+}
+.m-stat {
+  margin-top: 22px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+  font-size: 0.9rem;
+  color: var(--text);
+}
+.m-stat b {
+  color: var(--modal-color, var(--cyan));
+  font-size: 1.12rem;
+}
+.m-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.m-meta span {
+  font-size: 0.76rem;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.03);
+}
+.m-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(130, 165, 255, 0.10);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.25s ease, border-color 0.2s ease;
+}
+.m-close:hover {
+  background: rgba(255, 90, 120, 0.18);
+  border-color: #ff5a7c;
+  transform: rotate(90deg);
+}
+.m-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+}
+/* ---------------- แจ้งเตือน ---------------- */
+#toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translate(-50%, 24px);
+  z-index: 300;
+  padding: 12px 22px;
+  border-radius: 999px;
+  background: rgba(10, 14, 30, 0.95);
+  border: 1px solid var(--cyan);
+  color: var(--text);
+  font-size: 0.88rem;
+  box-shadow: 0 0 30px rgba(34, 211, 238, 0.3);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  max-width: 90vw;
+  text-align: center;
+}
+#toast.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}
+/* ---------------- ปุ่มกลับขึ้นบน ---------------- */
+#toTop {
+  position: fixed;
+  right: 20px;
+  bottom: 22px;
+  z-index: 150;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(10, 14, 30, 0.92);
+  border: 1px solid var(--line);
+  color: var(--cyan-soft);
+  font-size: 1.15rem;
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(14px);
+  transition: all 0.3s ease;
+  box-shadow: 0 0 22px rgba(34, 211, 238, 0.22);
+}
+#toTop.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+#toTop:hover {
+  border-color: var(--cyan);
+  box-shadow: 0 0 32px rgba(34, 211, 238, 0.5);
+}
+/* ---------------- เอฟเฟกต์ปรากฏ ---------------- */
+.reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: none;
+}
+.reveal.d1 { transition-delay: 0.08s; }
+.reveal.d2 { transition-delay: 0.16s; }
+.reveal.d3 { transition-delay: 0.24s; }
+.reveal.d4 { transition-delay: 0.32s; }
+.reveal.d5 { transition-delay: 0.40s; }
+/* ---------------- จอเล็ก ---------------- */
+@media (max-width: 920px) {
+  .about-grid {
+    grid-template-columns: 1fr;
   }
-
-  * { box-sizing: border-box; }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    margin: 0;
-    background: radial-gradient(1200px 700px at 70% -10%, #10204a 0%, transparent 60%),
-                radial-gradient(900px 600px at 0% 100%, #1a0f3d 0%, transparent 55%),
-                var(--bg);
-    color: var(--text);
-    font-family: "Inter", "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
-    line-height: 1.6;
-    overflow-x: hidden;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  ::selection { background: var(--accent); color: #04060f; }
-
-  a { color: inherit; text-decoration: none; }
-  img { max-width: 100%; }
-
-  /* ---------------- 3D canvas ---------------- */
-  #scene {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;          /* touch devices: let the page scroll */
-    transition: opacity .4s ease;
-  }
-  #scene.interactive { pointer-events: auto; } /* desktop: drag to orbit */
-  #scene canvas { display: block; touch-action: auto; }
-
-  /* Content sits above the canvas; only real content blocks the pointer,
-     so empty gutters let you drag/rotate the globe underneath. */
-  main { pointer-events: none; }
-  main .eyebrow, main h1, main h2, main h3, main h4, main p, main .lead,
-  main .hero-actions, main .hero-meta, main .section-head, main .card,
-  main .stat, main .footnote, main .panel, main .m-actions {
-    pointer-events: auto;
-  }
-  /* fallback / when JS-3D fails */
-  #scene-fallback {
-    position: fixed;
-    top: 18vh;
-    right: -8vw;
-    width: 46vw;
-    max-width: 620px;
-    aspect-ratio: 1;
-    border-radius: 50%;
-    z-index: 0;
-    background:
-      radial-gradient(circle at 35% 30%, rgba(79,242,255,.30), transparent 60%),
-      repeating-radial-gradient(circle at 50% 50%, rgba(79,242,255,.16) 0 1px, transparent 1px 26px);
-    filter: blur(.3px);
-    animation: spin 40s linear infinite;
-    pointer-events: none;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* ---------------- layout helpers ---------------- */
-  .wrap { width: min(1180px, 92vw); margin: 0 auto; }
-  main { position: relative; z-index: 2; }
-  section { scroll-margin-top: calc(var(--header-h) + 12px); position: relative; }
-  footer { pointer-events: auto; }
-
-  .eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: .74rem;
-    letter-spacing: .22em;
-    text-transform: uppercase;
-    color: var(--accent);
-    background: rgba(79, 242, 255, .08);
-    border: 1px solid rgba(79, 242, 255, .28);
-    padding: 6px 14px;
-    border-radius: 999px;
-    margin-bottom: 18px;
-  }
-  h1, h2, h3 { line-height: 1.15; margin: 0 0 .5em; letter-spacing: -.02em; }
-  h2 { font-size: clamp(1.7rem, 3.6vw, 2.6rem); }
-  .section-head { max-width: 640px; margin-bottom: 42px; }
-  .section-head p { color: var(--muted); margin: 0; font-size: 1.02rem; }
-
-  /* ---------------- header ---------------- */
-  header {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    height: var(--header-h);
-    z-index: 50;
-    display: flex;
-    align-items: center;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    background: rgba(5, 7, 15, .62);
-    border-bottom: 1px solid var(--line);
-    transition: background .3s ease;
-  }
-  .nav-inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: min(1180px, 92vw); margin: 0 auto; }
-
-  .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .02em; }
-  .logo .mark {
-    width: 30px; height: 30px; border-radius: 9px;
-    display: grid; place-items: center;
-    background: linear-gradient(140deg, var(--accent), #2b6bff);
-    color: #04060f; font-size: .95rem; font-weight: 800;
-    box-shadow: 0 0 18px rgba(79, 242, 255, .55);
-    transition: box-shadow .3s ease, background .4s ease;
-  }
-  .logo:hover .mark { box-shadow: 0 0 26px rgba(79, 242, 255, .85); }
-  .logo small { display: block; font-size: .62rem; color: var(--muted); letter-spacing: .18em; text-transform: uppercase; font-weight: 500; }
-
-  nav ul { display: flex; gap: 6px; list-style: none; margin: 0; padding: 0; }
-  nav a {
-    display: block; padding: 9px 15px; border-radius: 999px;
-    font-size: .92rem; color: var(--muted);
-    transition: color .25s ease, background .25s ease, box-shadow .25s ease;
-    position: relative;
-  }
-  nav a:hover { color: var(--text); background: rgba(120, 160, 255, .1); }
-  nav a.active {
-    color: var(--accent);
-    background: rgba(79, 242, 255, .1);
-    box-shadow: inset 0 0 0 1px rgba(79, 242, 255, .35);
-  }
+}
+@media (max-width: 760px) {
   .nav-toggle {
-    display: none; width: 42px; height: 38px; border-radius: 10px;
-    background: rgba(120,160,255,.1); border: 1px solid var(--line);
-    color: var(--text); cursor: pointer; font-size: 1.1rem;
-  }
-
-  /* ---------------- buttons ---------------- */
-  .btn {
-    --btn-glow: var(--accent);
-    display: inline-flex; align-items: center; gap: 9px;
-    padding: 13px 24px; border-radius: 999px;
-    font-size: .95rem; font-weight: 600; font-family: inherit;
-    cursor: pointer; border: 1px solid transparent;
-    transition: transform .2s ease, box-shadow .25s ease, background .25s ease, color .25s ease, border-color .25s ease;
-    position: relative; overflow: hidden;
-  }
-  .btn:active { transform: translateY(1px) scale(.985); }
-  .btn:focus-visible { outline: 2px solid var(--btn-glow); outline-offset: 3px; }
-  .btn-primary {
-    background: linear-gradient(120deg, var(--btn-glow), #2b6bff);
-    color: #04060f;
-    box-shadow: 0 8px 30px rgba(79, 242, 255, .32);
-  }
-  .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 14px 38px rgba(79, 242, 255, .5); }
-  .btn-ghost {
-    background: rgba(120, 160, 255, .07);
-    border-color: var(--line);
-    color: var(--text);
-  }
-  .btn-ghost:hover { transform: translateY(-3px); border-color: var(--btn-glow); box-shadow: 0 10px 28px rgba(0,0,0,.5); color: var(--btn-glow); }
-  .btn-ghost.on { border-color: var(--accent); color: var(--accent); background: rgba(79,242,255,.12); }
-
-  /* ---------------- hero ---------------- */
-  .hero {
-    min-height: 100svh;
-    display: flex; align-items: center;
-    padding: calc(var(--header-h) + 40px) 0 70px;
-  }
-  .hero-inner { max-width: 640px; }
-  .hero h1 {
-    font-size: clamp(2.5rem, 7vw, 4.6rem);
-    font-weight: 800;
-    background: linear-gradient(100deg, #ffffff 15%, var(--accent) 55%, #a58bff 95%);
-    -webkit-background-clip: text; background-clip: text;
-    -webkit-text-fill-color: transparent; color: transparent;
-    text-shadow: 0 0 60px rgba(79, 242, 255, .25);
-  }
-  .hero p.lead { font-size: clamp(1rem, 2.2vw, 1.18rem); color: var(--muted); margin: 0 0 30px; }
-  .hero-actions { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 34px; }
-
-  .hero-meta { display: flex; flex-wrap: wrap; gap: 10px; }
-  .chip {
-    font-size: .78rem; color: var(--muted);
-    border: 1px solid var(--line); border-radius: 999px;
-    padding: 6px 13px; background: rgba(9, 13, 28, .6);
-    display: inline-flex; align-items: center; gap: 7px;
-  }
-  .chip i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-2); box-shadow: 0 0 10px var(--accent-2); font-style: normal; animation: blink 2.2s ease-in-out infinite; }
-  @keyframes blink { 50% { opacity: .3; } }
-
-  .scroll-hint {
-    position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%);
-    font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; color: var(--muted);
-    display: flex; flex-direction: column; align-items: center; gap: 8px; opacity: .8;
-  }
-  .scroll-hint span.line { width: 1px; height: 34px; background: linear-gradient(var(--accent), transparent); animation: drop 1.8s ease-in-out infinite; }
-  @keyframes drop { 0% { transform: scaleY(.2); transform-origin: top; } 50% { transform: scaleY(1); transform-origin: top; } 100% { transform: scaleY(.2); transform-origin: bottom; } }
-
-  /* ---------------- cards ---------------- */
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 22px;
-  }
-  .card {
-    position: relative;
-    background: linear-gradient(160deg, rgba(20, 26, 52, .88), rgba(9, 12, 26, .88));
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    padding: 26px 24px 24px;
-    cursor: pointer;
-    overflow: hidden;
-    transition: transform .3s cubic-bezier(.2,.8,.2,1), border-color .3s ease, box-shadow .3s ease;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-  }
-  .card::before {
-    content: "";
-    position: absolute; inset: -1px;
-    background: radial-gradient(340px 200px at var(--mx, 50%) var(--my, 0%), var(--card-color, var(--accent)), transparent 62%);
-    opacity: 0; transition: opacity .35s ease; pointer-events: none;
-    mix-blend-mode: screen;
-  }
-  .card::after {
-    content: "";
-    position: absolute; left: 0; right: 0; top: 0; height: 2px;
-    background: linear-gradient(90deg, transparent, var(--card-color, var(--accent)), transparent);
-    opacity: .5; transition: opacity .3s ease;
-  }
-  .card:hover, .card:focus-visible {
-    transform: translateY(-9px);
-    border-color: color-mix(in srgb, var(--card-color, var(--accent)) 60%, transparent);
-    box-shadow: 0 24px 50px rgba(0,0,0,.55), 0 0 34px color-mix(in srgb, var(--card-color, var(--accent)) 26%, transparent);
-    outline: none;
-  }
-  .card:hover::before, .card:focus-visible::before { opacity: .22; }
-  .card:hover .card-icon, .card:focus-visible .card-icon { transform: translateY(-4px) scale(1.12) rotate(-6deg); }
-  .card:hover .card-go { opacity: 1; transform: translateX(0); }
-
-  .card-icon {
-    font-size: 2.2rem; line-height: 1;
-    width: 60px; height: 60px; display: grid; place-items: center;
-    border-radius: 16px; margin-bottom: 18px;
-    background: color-mix(in srgb, var(--card-color, var(--accent)) 16%, transparent);
-    border: 1px solid color-mix(in srgb, var(--card-color, var(--accent)) 42%, transparent);
-    box-shadow: 0 0 26px color-mix(in srgb, var(--card-color, var(--accent)) 24%, transparent);
-    transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s ease;
-  }
-  .card h3 { font-size: 1.16rem; margin-bottom: 8px; }
-  .card p { color: var(--muted); font-size: .93rem; margin: 0 0 18px; }
-  .card-tag {
-    font-size: .7rem; letter-spacing: .14em; text-transform: uppercase;
-    color: var(--card-color, var(--accent)); opacity: .85;
-  }
-  .card-go {
-    display: inline-flex; align-items: center; gap: 7px;
-    font-size: .85rem; font-weight: 600; color: var(--card-color, var(--accent));
-    opacity: .45; transform: translateX(-6px);
-    transition: opacity .3s ease, transform .3s ease;
-  }
-
-  /* ---------------- impact / stats ---------------- */
-  .stats {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 18px; margin-top: 6px;
-  }
-  .stat {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    padding: 26px 22px;
-    text-align: center;
-    transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
-  }
-  .stat:hover { transform: translateY(-6px); border-color: rgba(79,242,255,.4); box-shadow: 0 16px 40px rgba(0,0,0,.5), 0 0 26px rgba(79,242,255,.16); }
-  .stat .num {
-    font-size: clamp(2rem, 4.6vw, 2.9rem); font-weight: 800;
-    background: linear-gradient(120deg, var(--accent), #a58bff);
-    -webkit-background-clip: text; background-clip: text;
-    -webkit-text-fill-color: transparent; color: transparent;
     display: block;
   }
-  .stat .label { color: var(--muted); font-size: .88rem; }
-  .footnote { color: #6f78a0; font-size: .78rem; margin-top: 18px; }
-
-  /* ---------------- about ---------------- */
-  .about-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 34px; align-items: start; }
-  .panel {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    padding: 28px;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+  nav {
+    position: fixed;
+    top: var(--header-h);
+    left: 0;
+    right: 0;
+    background: rgba(7, 10, 22, 0.97);
+    border-bottom: 1px solid var(--line);
+    transform: translateY(-140%);
+    transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.25, 1);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
   }
-  .panel h3 { font-size: 1.1rem; display: flex; align-items: center; gap: 10px; }
-  .panel p { color: var(--muted); font-size: .95rem; }
-  .stack { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 14px; }
-  .stack span {
-    font-size: .76rem; padding: 6px 12px; border-radius: 8px;
-    background: rgba(120,160,255,.09); border: 1px solid var(--line); color: var(--text);
+  nav.open {
+    transform: translateY(0);
   }
-  .checklist { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-  .checklist li { display: flex; gap: 11px; align-items: flex-start; color: var(--muted); font-size: .93rem; }
-  .checklist li b { color: var(--text); font-weight: 600; }
-  .checklist .tick {
-    flex: 0 0 auto; width: 20px; height: 20px; border-radius: 50%;
-    background: rgba(125,255,155,.14); border: 1px solid rgba(125,255,155,.45);
-    color: var(--accent-2); font-size: .7rem; display: grid; place-items: center; margin-top: 2px;
+  nav ul {
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 6vw 20px;
   }
-
-  /* ---------------- footer ---------------- */
-  footer {
-    position: relative; z-index: 2;
-    margin-top: 90px;
-    border-top: 1px solid var(--line);
-    background: linear-gradient(180deg, rgba(9,13,28,.5), rgba(5,7,15,.95));
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 54px 0 34px;
+  nav a {
+    padding: 13px 16px;
+    font-size: 1rem;
   }
-  .foot-grid { display: flex; flex-wrap: wrap; gap: 30px; justify-content: space-between; align-items: flex-start; }
-  .foot-grid p { color: var(--muted); font-size: .9rem; max-width: 380px; margin: 8px 0 0; }
-  .foot-links { display: flex; flex-direction: column; gap: 10px; }
-  .foot-links a { color: var(--muted); font-size: .9rem; transition: color .2s ease, transform .2s ease; width: fit-content; }
-  .foot-links a:hover { color: var(--accent); transform: translateX(4px); }
-  .gh-btn {
-    display: inline-flex; align-items: center; gap: 10px;
-    padding: 12px 20px; border-radius: 12px;
-    background: rgba(120,160,255,.08); border: 1px solid var(--line);
-    color: var(--text); font-weight: 600; font-size: .92rem;
-    transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+  .hero {
+    min-height: auto;
+    padding-top: calc(var(--header-h) + 56px);
+    padding-bottom: 110px;
   }
-  .gh-btn:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 12px 30px rgba(0,0,0,.5), 0 0 24px rgba(79,242,255,.2); }
-  .gh-btn svg { width: 20px; height: 20px; fill: currentColor; }
-  .copyright { margin-top: 34px; padding-top: 20px; border-top: 1px solid var(--line); color: #6f78a0; font-size: .8rem; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-
-  /* ---------------- modal ---------------- */
-  .modal-backdrop {
-    position: fixed; inset: 0; z-index: 90;
-    background: rgba(3, 5, 12, .78);
-    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-    display: grid; place-items: center; padding: 20px;
-    opacity: 0; visibility: hidden; transition: opacity .28s ease, visibility .28s;
+  #bg3d {
+    opacity: 0.6;
   }
-  .modal-backdrop.open { opacity: 1; visibility: visible; }
   .modal {
-    width: min(620px, 100%);
-    max-height: 86vh; overflow-y: auto;
-    background: linear-gradient(165deg, #121733, #0a0d1e);
-    border: 1px solid var(--modal-color, var(--accent));
-    border-radius: 22px;
-    padding: 34px 32px 30px;
-    box-shadow: 0 30px 80px rgba(0,0,0,.7), 0 0 50px color-mix(in srgb, var(--modal-color, var(--accent)) 22%, transparent);
-    transform: translateY(26px) scale(.97); opacity: 0;
-    transition: transform .32s cubic-bezier(.2,.9,.25,1), opacity .32s ease;
-    position: relative;
+    padding: 28px 22px 26px;
   }
-    .modal-backdrop.open .modal { transform: translateY(0) scale(1); opacity: 1; }
-  .modal .m-icon { font-size: 2.6rem; }
-  .modal h3 { font-size: 1.6rem; margin: 10px 0 6px; }
-  .modal .m-tag { font-size: .72rem; letter-spacing: .18em; text-transform: uppercase; color: var(--modal-color, var(--accent)); }
-  .modal p.m-desc { color: var(--muted); font-size: .97rem; }
-  .modal h4 { font-size: .8rem; letter-spacing: .16em; text-transform: uppercase; color: var(--text); margin: 24px 0 12px; }
-  .m-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-  .m-list li {
-    background: rgba(120,160,255,.06); border: 1px solid var(--line);
-    border-left: 3px solid var(--modal-color, var(--accent));
-    border-radius: 10px; padding: 11px 14px; font-size: .9rem; color: var(--muted);
+  .scroll-hint {
+    display: none;
   }
-  .m-stat {
-    margin-top: 22px; padding: 16px 18px; border-radius: 14px;
-    background: color-mix(in srgb, var(--modal-color, var(--accent)) 12%, transparent);
-    border: 1px solid color-mix(in srgb, var(--modal-color, var(--accent)) 38%, transparent);
-    font-size: .9rem; color: var(--text);
+  .btn {
+    width: 100%;
   }
-  .m-stat b { color: var(--modal-color, var(--accent)); font-size: 1.15rem; }
-  .m-close {
-    position: absolute; top: 16px; right: 16px;
-    width: 38px; height: 38px; border-radius: 50%;
-    background: rgba(120,160,255,.1); border: 1px solid var(--line);
-    color: var(--text); font-size: 1.1rem; cursor: pointer;
-    transition: background .2s ease, transform .2s ease, border-color .2s ease;
+  .hero-actions .btn {
+    flex: 1 1 100%;
   }
-  .m-close:hover { background: rgba(255,90,120,.18); border-color: #ff5a7c; transform: rotate(90deg); }
-  .m-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
-
-  /* ---------------- toast ---------------- */
-  #toast {
-    position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 24px);
-    z-index: 100; padding: 12px 20px; border-radius: 999px;
-    background: rgba(10, 14, 30, .95); border: 1px solid var(--accent);
-    color: var(--text); font-size: .88rem;
-    box-shadow: 0 0 30px rgba(79,242,255,.3);
-    opacity: 0; visibility: hidden; transition: all .3s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
-  #toast.show { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
-
-  /* ---------------- back to top ---------------- */
-  #toTop {
-    position: fixed; right: 20px; bottom: 22px; z-index: 60;
-    width: 46px; height: 46px; border-radius: 50%;
-    background: rgba(10,14,30,.9); border: 1px solid var(--line);
-    color: var(--accent); font-size: 1.1rem; cursor: pointer;
-    opacity: 0; visibility: hidden; transform: translateY(14px);
-    transition: all .3s ease;
-    box-shadow: 0 0 22px rgba(79,242,255,.22);
+  html {
+    scroll-behavior: auto;
   }
-  #toTop.show { opacity: 1; visibility: visible; transform: translateY(0); }
-  #toTop:hover { border-color: var(--accent); box-shadow: 0 0 32px rgba(79,242,255,.5); }
-
-  /* ---------------- reveal ---------------- */
-  .reveal { opacity: 0; transform: translateY(26px); transition: opacity .7s ease, transform .7s cubic-bezier(.2,.8,.2,1); }
-  .reveal.visible { opacity: 1; transform: none; }
-  .reveal.d1 { transition-delay: .08s; } .reveal.d2 { transition-delay: .16s; }
-  .reveal.d3 { transition-delay: .24s; } .reveal.d4 { transition-delay: .32s; }
-
-  /* ---------------- responsive ---------------- */
-  @media (max-width: 900px) {
-    .about-grid { grid-template-columns: 1fr; }
+  .reveal {
+    opacity: 1;
+    transform: none;
   }
-  @media (max-width: 760px) {
-    .nav-toggle { display: block; }
-    nav {
-      position: fixed; top: var(--header-h); left: 0; right: 0;
-      background: rgba(7, 10, 22, .97);
-      border-bottom: 1px solid var(--line);
-      transform: translateY(-140%); transition: transform .35s cubic-bezier(.2,.9,.25,1);
-      backdrop-filter: blur(14px);
-    }
-    nav.open { transform: translateY(0); }
-    nav ul { flex-direction: column; gap: 4px; padding: 14px 6vw 20px; }
-    nav a { padding: 13px 16px; font-size: 1rem; }
-    .hero { min-height: auto; padding-top: calc(var(--header-h) + 56px); padding-bottom: 120px; }
-    #scene { opacity: .55; }
-    #scene-fallback { top: auto; bottom: -10vh; right: -22vw; width: 90vw; opacity: .6; }
-    .modal { padding: 28px 22px 26px; }
-    .scroll-hint { display: none; }
+  .marquee {
+    animation: none;
   }
-  @media (prefers-reduced-motion: reduce) {
-    * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
-    html { scroll-behavior: auto; }
-    .reveal { opacity: 1; transform: none; }
-  }
+}
 </style>
 </head>
 <body>
-
-<!-- ===== 3D scene (fixed background) ===== -->
-<div id="scene" aria-hidden="true"></div>
-<div id="scene-fallback" aria-hidden="true"></div>
-
-<!-- ===== header ===== -->
+<div class="top-glow-line" aria-hidden="true"></div>
+<!-- ===== พื้นหลัง 3 มิติทั้งหน้า ===== -->
+<div id="bg3d" aria-hidden="true"></div>
+<div id="bg3d-vignette" aria-hidden="true"></div>
+<!-- ===== ส่วนหัว ===== -->
 <header>
   <div class="nav-inner">
-    <a class="logo" href="#home" aria-label="AI in Daily Life home">
-      <span class="mark">AI</span>
-      <span>Daily&nbsp;AI<small>three.js demo</small></span>
+    <a class="logo" href="#home" aria-label="กลับขึ้นด้านบน">
+      <span class="mark">🤖</span>
+      <span>ชีวิตประจำวันกับเอไอ<small>AI DAILY LIFE</small></span>
     </a>
-
-    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">☰</button>
-
-    <nav id="mainNav" aria-label="Main navigation">
+    <button class="nav-toggle" id="navToggle" aria-label="เปิดเมนู" aria-expanded="false">☰</button>
+    <nav id="mainNav" aria-label="เมนูหลัก">
       <ul>
-        <li><a href="#home" class="nav-link active">Home</a></li>
-        <li><a href="#applications" class="nav-link">Applications</a></li>
-        <li><a href="#impact" class="nav-link">Impact</a></li>
-        <li><a href="#about" class="nav-link">About</a></li>
+        <li><a href="#home" class="nav-link active">หน้าแรก</a></li>
+        <li><a href="#applications" class="nav-link">การประยุกต์ใช้</a></li>
+        <li><a href="#impact" class="nav-link">ผลกระทบ</a></li>
+        <li><a href="#day" class="nav-link">หนึ่งวันกับเอไอ</a></li>
+        <li><a href="#faq" class="nav-link">คำถามพบบ่อย</a></li>
+        <li><a href="#about" class="nav-link">เกี่ยวกับ</a></li>
       </ul>
     </nav>
   </div>
 </header>
-
 <main>
-  <!-- ===== hero ===== -->
+  <!-- ===== ฮีโร่ ===== -->
   <section id="home" class="hero">
     <div class="wrap hero-inner">
-      <span class="eyebrow">● Interactive 3D · WebGL</span>
-      <h1>AI in Daily&nbsp;Life</h1>
+      <span class="eyebrow"><span class="dot"></span>อินเทอร์แอกทีฟ 3 มิติ · เทคโนโลยีเว็บจีแอล</span>
+      <h1>
+        <span class="thai-big">ปัญญาประดิษฐ์ในชีวิตประจำวัน</span>
+        <span class="en-sub">AI IN DAILY LIFE</span>
+      </h1>
       <p class="lead">
-        Artificial Intelligence is no longer science fiction — it wakes you up, books your route,
-        flags fraud on your card and helps your doctor read an X‑ray. Explore the five places
-        you already meet AI every single day.
+        ทุกเช้าที่คุณตื่นนอน <strong>เอไอช่วยปลุกคุณ ปรับแอร์ เลือกเพลง และวางแผนเส้นทาง</strong>
+        ตั้งแต่บ้าน การแพทย์ การเรียน การเดินทาง การเงิน จนถึงความบันเทิง —
+        มาสำรวจ 6 ด้านที่เอไออยู่เคียงข้างคุณทุกวันผ่านลูกโลก 3 มิติที่หมุนได้จริง
       </p>
-
       <div class="hero-actions">
-        <button class="btn btn-primary" id="btnExplore">Explore applications ↓</button>
-        <button class="btn btn-ghost" id="btnSpin" aria-pressed="false">⏸ Pause globe</button>
-        <button class="btn btn-ghost" id="btnAccent">🎨 Shuffle glow</button>
+        <a class="btn btn-primary" href="#applications" id="btnExplore">สำรวจการใช้งาน ↓</a>
+        <button class="btn btn-ghost" id="btnSpin" aria-pressed="false">⏸ หยุดการหมุน</button>
+        <button class="btn btn-ghost" id="btnAccent">🎨 เปลี่ยนสีแสง</button>
       </div>
-
       <div class="hero-meta">
-        <span class="chip"><i></i> Drag the empty space to rotate the globe</span>
-        <span class="chip"><i></i> Particle atmosphere + orbiting satellites</span>
-        <span class="chip"><i></i> Click a card for details</span>
+        <span class="chip cy"><i></i>ลากพื้นที่ว่างเพื่อหมุนลูกโลก</span>
+        <span class="chip pu"><i></i>เลื่อนเมาส์เพื่อเอียงมุมมอง</span>
+        <span class="chip"><i></i>คลิกการ์ดเพื่อดูรายละเอียด</span>
+      </div>
+      <div class="hero-side-hint" aria-hidden="true">
+        <span class="mouse"></span>
+        <span>เลื่อนลงเพื่อสำรวจ · ลูกโลก 3 มิติอยู่ด้านหลังเนื้อหาทั้งหน้า</span>
       </div>
     </div>
-
     <div class="scroll-hint" aria-hidden="true">
-      <span>scroll</span>
+      <span>เลื่อนลง</span>
       <span class="line"></span>
     </div>
   </section>
-
-  <!-- ===== applications ===== -->
-  <section id="applications" style="padding: 90px 0 20px;">
+  <!-- ===== แถบวิ่ง ===== -->
+  <div class="marquee-band" aria-hidden="true">
+    <div class="wrap">
+      <div class="marquee" id="marqueeTrack">
+        <span><b>🏠 บ้านอัจฉริยะ</b> สั่งงานด้วยเสียง · ประหยัดไฟอัตโนมัติ</span>
+        <span><b>🏥 การแพทย์</b> อ่านภาพถ่ายรังสี · ตรวจเลือดหาสัญญาณโรค</span>
+        <span><b>🎓 การศึกษา</b> ครูเอไอส่วนตัว · เรียนตามจังหวะของตัวเอง</span>
+        <span><b>🚗 การขนส่ง</b> เส้นทางเร็วสุด · ทำนายรถติดล่วงหน้า</span>
+        <span><b>💰 การเงิน</b> จับทุจริตในเสี้ยววินาที · วางงบอัจฉริยะ</span>
+        <span><b>🎬 ความบันเทิง</b> แนะนำตรงใจ · สร้างเพลงและวิดีโอ</span>
+      </div>
+    </div>
+  </div>
+  <!-- ===== 6 การ์ด ===== -->
+  <section id="applications" class="apps-section">
     <div class="wrap">
       <div class="section-head reveal">
-        <span class="eyebrow">Five everyday sectors</span>
-        <h2>Where AI shows up in your day</h2>
-        <p>Hover a card to recolour the globe, click it to open a deep dive with real-world examples.</p>
+        <span class="section-index">01 — APPLICATIONS</span>
+        <span class="eyebrow"><span class="dot"></span>หกด้านในชีวิตจริง</span>
+        <h2>เอไออยู่ตรงไหนใน<span class="grad">วันของคุณ</span></h2>
+        <p>ชี้ที่การ์ดเพื่อเปลี่ยนสีลูกโลก 3 มิติ คลิกเพื่อเปิดรายละเอียดเชิงลึกพร้อมตัวอย่างใช้งานจริงในประเทศไทย</p>
       </div>
-
-      <div class="grid" id="cardGrid"><!-- cards injected by JS --></div>
+      <div class="filter-bar reveal" role="group" aria-label="กรองหมวดหมู่">
+        <button class="filter-btn active" data-filter="all">ทั้งหมด 6 ด้าน</button>
+        <button class="filter-btn" data-filter="home">บ้านและไลฟ์สไตล์</button>
+        <button class="filter-btn" data-filter="work">งานและการเรียน</button>
+        <button class="filter-btn" data-filter="city">เมืองและการเงิน</button>
+      </div>
+      <div class="grid" id="cardGrid">
+        <!-- การ์ดที่ 1 -->
+        <article class="card reveal" data-group="home" data-index="0" tabindex="0" role="button" aria-label="เปิดรายละเอียดบ้านอัจฉริยะ" style="--card-color:#22d3ee; --card-color-2:#34d399;">
+          <span class="sweep" aria-hidden="true"></span>
+          <div class="card-icon">🏠</div>
+          <span class="card-en">Smart Home</span>
+          <h3>บ้านอัจฉริยะ</h3>
+          <p class="desc">สั่งเปิดแอร์ด้วยเสียงก่อนถึงบ้าน ไฟปรับเองตามแสงธรรมชาติ หุ่นยนต์ดูดฝุ่นจำแผนที่ห้องได้ แถมระบบช่วยประหยัดค่าไฟสูงสุด 40% โดยที่คุณแทบไม่ต้องแตะสวิตช์เลย</p>
+          <div class="meta-row">
+            <span class="hot">Voice · IoT</span>
+            <span>อัตโนมัติ</span>
+            <span>ประหยัดพลังงาน</span>
+          </div>
+          <div class="card-foot">
+            <span class="card-go">อ่านเพิ่มเติม →</span>
+            <span class="card-num">01 / 06</span>
+          </div>
+        </article>
+        <!-- การ์ดที่ 2 -->
+        <article class="card reveal d1" data-group="city" data-index="1" tabindex="0" role="button" aria-label="เปิดรายละเอียดการแพทย์" style="--card-color:#f472b6; --card-color-2:#a855f7;">
+          <span class="sweep" aria-hidden="true"></span>
+          <div class="card-icon">🏥</div>
+          <span class="card-en">Healthcare</span>
+          <h3>การแพทย์</h3>
+          <p class="desc">เอไอช่วยอ่านฟิล์มเอกซเรย์และซีทีสแกน วิเคราะห์ผลเลือดหาสัญญาณเบาหวาน มะเร็ง และโรคหัวใจตั้งแต่ระยะเริ่มต้น พร้อมแชตคัดกรองอาการเบื้องต้นตลอด 24 ชั่วโมง</p>
+          <div class="meta-row">
+            <span class="hot">Imaging · Lab</span>
+            <span>วิเคราะห์เลือด</span>
+            <span>ตรวจพบโรคเร็ว</span>
+          </div>
+          <div class="card-foot">
+            <span class="card-go">อ่านเพิ่มเติม →</span>
+            <span class="card-num">02 / 06</span>
+          </div>
+        </article>
+        <!-- การ์ดที่ 3 -->
+        <article class="card reveal d2" data-group="work" data-index="2" tabindex="0" role="button" aria-label="เปิดรายละเอียดการศึกษา" style="--card-color:#fbbf24; --card-color-2:#fb7185;">
+          <span class="sweep" aria-hidden="true"></span>
+          <div class="card-icon">🎓</div>
+          <span class="card-en">Education</span>
+          <h3>การศึกษา</h3>
+          <p class="desc">ครูเอไอปรับบทเรียนตามจุดอ่อนของแต่ละคน ตรวจการบ้านพร้อมอธิบายวิธีคิด แปลภาษาแบบเรียลไทม์ และช่วยผู้พิการทางการได้ยินด้วยคำบรรยายอัตโนมัติ เรียนที่ไหนเมื่อไรก็ได้</p>
+          <div class="meta-row">
+            <span class="hot">Personalized · Tutor</span>
+            <span>ครูเอไอ</span>
+            <span>เข้าถึงง่าย</span>
+          </div>
+          <div class="card-foot">
+            <span class="card-go">อ่านเพิ่มเติม →</span>
+            <span class="card-num">03 / 06</span>
+          </div>
+        </article>
+        <!-- การ์ดที่ 4 -->
+        <article class="card reveal d3" data-group="city" data-index="3" tabindex="0" role="button" aria-label="เปิดรายละเอียดการขนส่ง" style="--card-color:#34d399; --card-color-2:#22d3ee;">
+          <span class="sweep" aria-hidden="true"></span>
+          <div class="card-icon">🚗</div>
+          <span class="card-en">Transportation</span>
+          <h3>การขนส่ง</h3>
+          <p class="desc">แอปแผนที่ทำนายรถติดล่วงหน้า 15 นาที เลือกเส้นทางที่เร็วที่สุดแบบเรียลไทม์ รถยนต์ช่วยเบรกและอยู่ในเลนอัตโนมัติ ส่วนรถไร้คนขับใช้เซ็นเซอร์รอบคันตัดสินใจทุกเสี้ยววินาที</p>
+          <div class="meta-row">
+            <span class="hot">Route · Traffic</span>
+            <span>ทำนายจราจร</span>
+            <span>รถอัตโนมัติ</span>
+          </div>
+          <div class="card-foot">
+            <span class="card-go">อ่านเพิ่มเติม →</span>
+            <span class="card-num">04 / 06</span>
+          </div>
+        </article>
+        <!-- การ์ดที่ 5 -->
+        <article class="card reveal d4" data-group="city" data-index="4" tabindex="0" role="button" aria-label="เปิดรายละเอียดการเงิน" style="--card-color:#a855f7; --card-color-2:#6366f1;">
+          <span class="sweep" aria-hidden="true"></span>
+          <div class="card-icon">💰</div>
+          <span class="card-en">Finance</span>
+          <h3>การเงิน</h3>
+          <p class="desc">ทุกรูดบัตรมีเอไอให้คะแนนความเสี่ยงในไม่ถึง 0.1 วินาที จับยอดเงินผิดปกติแล้วแจ้งเตือนทันที พร้อมช่วยจัดงบรายเดือน วิเคราะห์พอร์ต และเตือนก่อนเงินหมดสิ้นเดือน</p>
+          <div class="meta-row">
+            <span class="hot">Fraud · Budget</span>
+            <span>กันโกง</span>
+            <span>วางแผนลงทุน</span>
+          </div>
+          <div class="card-foot">
+            <span class="card-go">อ่านเพิ่มเติม →</span>
+            <span class="card-num">05 / 06</span>
+          </div>
+        </article>
+        <!-- การ์ดที่ 6 -->
+        <article class="card reveal d5" data-group="home" data-index="5" tabindex="0" role="button" aria-label="เปิดรายละเอียดความบันเทิง" style="--card-color:#fb7185; --card-color-2:#fbbf24;">
+          <span class="sweep" aria-hidden="true"></span>
+          <div class="card-icon">🎬</div>
+          <span class="card-en">Entertainment</span>
+          <h3>ความบันเทิง</h3>
+          <p class="desc">หนัง เพลง และคลิปที่ตรงใจคุณเกิดจากระบบแนะนำที่เรียนรู้รสนิยมทุกคลิก แถมเอไอช่วยแต่งเพลง ตัดต่อวิดีโอ พากย์เสียงไทย และสร้างตัวละครเกมที่ตอบโต้เหมือนคนจริง</p>
+          <div class="meta-row">
+            <span class="hot">Recommend · Create</span>
+            <span>แนะนำตรงใจ</span>
+            <span>สร้างคอนเทนต์</span>
+          </div>
+          <div class="card-foot">
+            <span class="card-go">อ่านเพิ่มเติม →</span>
+            <span class="card-num">06 / 06</span>
+          </div>
+        </article>
+      </div>
     </div>
   </section>
-
-  <!-- ===== impact ===== -->
-  <section id="impact" style="padding: 90px 0 20px;">
+  <!-- ===== ผลกระทบ ===== -->
+  <section id="impact" class="impact-section">
     <div class="wrap">
       <div class="section-head reveal">
-        <span class="eyebrow">By the numbers</span>
-        <h2>The quiet impact</h2>
-        <p>A snapshot of how deeply AI has already blended into ordinary routines.</p>
+        <span class="section-index">02 — IMPACT</span>
+        <span class="eyebrow purple"><span class="dot"></span>ตัวเลขที่สัมผัสได้</span>
+        <h2>ผลกระทบ<span class="grad">ที่เงียบแต่ลึก</span></h2>
+        <p>ภาพรวมว่าเอไอแทรกอยู่ในกิจวัตรประจำวันของเรามากแค่ไหน ตัวเลขด้านล่างเป็นค่าประมาณเพื่อการเรียนรู้</p>
       </div>
-
       <div class="stats">
-        <div class="stat reveal"><span class="num" data-to="72" data-suffix="%">0</span><span class="label">of households run at least one AI‑powered device</span></div>
-        <div class="stat reveal d1"><span class="num" data-to="40" data-suffix="%">0</span><span class="label">less energy used by AI climate control</span></div>
-        <div class="stat reveal d2"><span class="num" data-to="3.5" data-dec="1" data-suffix="h">0</span><span class="label">saved per week on repetitive tasks</span></div>
-        <div class="stat reveal d3"><span class="num" data-to="5" data-suffix="/5">0</span><span class="label">sectors above already run on AI</span></div>
+        <div class="stat reveal"><span class="num" data-to="72" data-suffix="%">0</span><span class="label">ของครัวเรือนมีอุปกรณ์เอไออย่างน้อย 1 ชิ้น ทั้งลำโพงอัจฉริยะ กล้อง หรือทีวี</span></div>
+        <div class="stat reveal d1"><span class="num" data-to="40" data-suffix="%">0</span><span class="label">ค่าไฟแอร์ลดลงได้เมื่อใช้ระบบปรับอุณหภูมิอัตโนมัติที่เรียนรู้พฤติกรรม</span></div>
+        <div class="stat reveal d2"><span class="num" data-to="3.5" data-dec="1" data-suffix=" ชม.">0</span><span class="label">เวลาที่ประหยัดได้ต่อสัปดาห์จากงานซ้ำซากที่เอไอช่วยทำให้</span></div>
+        <div class="stat reveal d3"><span class="num" data-to="6" data-suffix="/6">0</span><span class="label">ด้านในหน้านี้ที่คุณสัมผัสเอไออยู่แล้วทุกวันโดยไม่รู้ตัว</span></div>
       </div>
-      <p class="footnote reveal">* Figures are illustrative estimates assembled for this demo, not sourced research.</p>
+      <p class="footnote reveal">* ตัวเลขเป็นค่าประมาณเชิงสาธิตเพื่อการเรียนรู้ ไม่ใช่งานวิจัยอ้างอิงอย่างเป็นทางการ</p>
     </div>
   </section>
-
-  <!-- ===== about ===== -->
-  <section id="about" style="padding: 90px 0 40px;">
+  <!-- ===== หนึ่งวันกับเอไอ ===== -->
+  <section id="day" class="day-section">
     <div class="wrap">
       <div class="section-head reveal">
-        <span class="eyebrow">About this site</span>
-        <h2>Built with Three.js, zero frameworks</h2>
-        <p>One HTML file, one CDN, no build step — deploy it anywhere that serves static files.</p>
+        <span class="section-index">03 — A DAY WITH AI</span>
+        <span class="eyebrow"><span class="dot"></span>ตั้งแต่ตื่นถึงเข้านอน</span>
+        <h2>หนึ่งวัน<span class="grad">ที่มีเอไอเคียงข้าง</span></h2>
+        <p>ลองไล่ตามเวลาจริง ตั้งแต่เช้าจรดค่ำ ว่าคุณเจอเอ艾 เอ้ย เอไอตรงจุดไหนบ้าง</p>
       </div>
-
+      <div class="timeline">
+        <div class="timeline-card reveal">
+          <span class="time">07:00 — MORNING</span>
+          <h3>🌅 ตื่นนอนอย่างนุ่มนวล</h3>
+          <p>นาฬิกาปลุกวิเคราะห์วงจรการนอนแล้วปลุกช่วงหลับตื้น ผ้าม่านเปิดรับแสงเอง ลำโพงอัจฉริยะอ่านข่าว พยากรณ์อากาศ และสภาพจราจรให้ฟังพร้อมกาแฟแก้วแรก</p>
+        </div>
+        <div class="timeline-card reveal d1">
+          <span class="time">09:00 — WORK</span>
+          <h3>💼 ทำงานไวขึ้นสองเท่า</h3>
+          <p>อีเมลแยกหมวดอัตโนมัติ ประชุมมีสรุปใจความพร้อมสิ่งที่ต้องทำต่อ โค้ดและเอกสารร่างแรกเสร็จในไม่กี่นาที เหลือเวลาให้คิดงานสำคัญจริง ๆ</p>
+        </div>
+        <div class="timeline-card reveal d2">
+          <span class="time">12:30 — LUNCH</span>
+          <h3>🍜 สั่งข้าวแบบรู้ใจ</h3>
+          <p>แอปฟู้ดเดลิเวอรีจำได้ว่าคุณชอบเผ็ดน้อย ไม่ใส่ผักชี แนะนำร้านใหม่ที่ตรงรสนิยม คำนวณเวลาส่งแม่นยำ แถมแนะนำเมนูสุขภาพตามเป้าหมายแคลอรี</p>
+        </div>
+        <div class="timeline-card reveal d3">
+          <span class="time">18:00 — COMMUTE</span>
+          <h3>🛣️ กลับบ้านเลี่ยงรถติด</h3>
+          <p>แผนที่เตือนว่ารถติดตรงพระราม 9 ให้เลี่ยงไปอีกเส้น ชำระค่าทางด่วนอัตโนมัติ รถช่วยเตือนมุมอับสายตา ถึงบ้านแบบไม่เสียอารมณ์</p>
+        </div>
+        <div class="timeline-card reveal d4">
+          <span class="time">20:00 — RELAX</span>
+          <h3>🎮 พักผ่อนตรงรสนิยม</h3>
+          <p>แพลตฟอร์มสตรีมมิงจัดหนังที่คุณน่าจะชอบ 9 เรื่อง หูฟังตัดเสียงรบกวนอัตโนมัติ เกมปรับความยากตามฝีมือ ส่วนเด็ก ๆ ทบทวนบทเรียนกับครูเอไอ</p>
+        </div>
+        <div class="timeline-card reveal d5">
+          <span class="time">22:30 — NIGHT</span>
+          <h3>🌙 เข้านอนอย่างปลอดภัย</h3>
+          <p>บ้านล็อกประตูเอง ปรับแอร์ 26 องศาตามที่คุณชอบ กล้องวงจรปิดแยกคนคุ้นเคยกับคนแปลกหน้า นาฬิกาข้อมือติดตามการนอนเพื่อปลุกคุณอย่างพอดีพรุ่งนี้</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- ===== คำถามพบบ่อย ===== -->
+  <section id="faq" class="faq-section">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="section-index">04 — FAQ</span>
+        <span class="eyebrow purple"><span class="dot"></span>ข้อสงสัยยอดฮิต</span>
+        <h2>คำถาม<span class="grad">ที่พบบ่อย</span></h2>
+        <p>คลิกแต่ละข้อเพื่อขยายคำตอบ ทุกปุ่มใช้งานได้จริง</p>
+      </div>
+      <div class="faq-list">
+        <div class="faq-item reveal">
+          <button class="faq-q">เอไอจะมาแย่งงานของเราหรือไม่?<span class="plus">＋</span></button>
+          <div class="faq-a"><p>เอไอเปลี่ยนลักษณะงานมากกว่าลบงานทั้งหมด งานซ้ำซากจะถูกทำให้อัตโนมัติ แต่งานที่ต้องใช้ความคิดสร้างสรรค์ ความเห็นอกเห็นใจ และการตัดสินใจเชิงจริยธรรมยังต้องการมนุษย์ ทักษะการใช้เอไอเป็นเครื่องมือจึงสำคัญกว่าการกลัวมัน</p></div>
+        </div>
+        <div class="faq-item reveal d1">
+          <button class="faq-q">ข้อมูลส่วนตัวของเราปลอดภัยแค่ไหน?<span class="plus">＋</span></button>
+          <div class="faq-a"><p>ปลอดภัยเมื่อเราใช้อย่างรู้เท่าทัน ควรเปิดการยืนยันตัวตนสองชั้น ตรวจสอบสิทธิ์แอป ปิดไมโครโฟนและตำแหน่งเมื่อไม่ใช้ และอ่านนโยบายความเป็นส่วนตัวก่อนให้ข้อมูลสำคัญกับแชตบอตหรือแอปใหม่ ๆ</p></div>
+        </div>
+        <div class="faq-item reveal d2">
+          <button class="faq-q">เริ่มต้นใช้เอไอในชีวิตประจำวันอย่างไรดี?<span class="plus">＋</span></button>
+          <div class="faq-a"><p>เริ่มจากเรื่องใกล้ตัว 3 อย่าง ได้แก่ ใช้ผู้ช่วยเสียงตั้งเตือนและค้นข้อมูล ใช้แอปจดบันทึกรายรับรายจ่ายอัตโนมัติ และใช้เครื่องมือสรุปเอกสารช่วยงาน จากนั้นค่อยขยับไปบ้านอัจฉริยะหรือระบบอัตโนมัติที่ซับซ้อนขึ้น</p></div>
+        </div>
+        <div class="faq-item reveal d3">
+          <button class="faq-q">เว็บไซต์นี้สร้างด้วยเทคโนโลยีอะไร?<span class="plus">＋</span></button>
+          <div class="faq-a"><p>ไฟล์เดียวจบด้วยเอชทีเอ็มแอล ซีเอสเอส และจาวาสคริปต์ล้วน ลูกโลก 3 มิติเรนเดอร์ด้วย Three.js ผ่านซีดีเอ็นแบบ importmap มีทั้งโครงลวด เปลือกอนุภาค ดาวพื้นหลัง วงโคจรดาวเทียม และเส้นเชื่อมพร้อมแสงวิ่ง</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- ===== เกี่ยวกับ ===== -->
+  <section id="about" class="about-section">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="section-index">05 — ABOUT</span>
+        <span class="eyebrow"><span class="dot"></span>เกี่ยวกับเว็บนี้</span>
+        <h2>สร้างด้วย <span class="grad">Three.js ล้วน ๆ</span></h2>
+        <p>ไฟล์เดียว ไม่ต้องบิลด์ ไม่ต้องติดตั้ง วางบนโฮสต์ไฟล์สถิตที่ไหนก็ใช้งานได้ทันที</p>
+      </div>
       <div class="about-grid">
         <div class="panel reveal">
-          <h3>🧩 What's under the hood</h3>
-          <p>
-            The wireframe globe, orbiting satellites, connection arcs and particle atmosphere are
-            rendered with WebGL through Three.js. The UI layer is hand-written HTML, CSS and
-            vanilla JavaScript.
-          </p>
+          <h3>🧩 เบื้องหลังลูกโลก 3 มิติ</h3>
+          <p>ลูกโลกโครงลวด จุดแสงเมือง วงแหวนดาวเทียม เส้นโค้งเชื่อมพร้อมแสงวิ่ง เปลือกอนุภาคบรรยากาศ และดวงดาวพื้นหลังหลายร้อยดวง เรนเดอร์แบบเรียลไทม์ด้วยเว็บจีแอล</p>
+          <p>เลื่อนเมาส์เพื่อสร้างพารัลแลกซ์ ลากพื้นที่ว่างเพื่อหมุน ชี้การ์ดเพื่อเปลี่ยนสีแสงของทั้งฉาก ทั้งหมดเชื่อมกันผ่านระบบอีเวนต์เดียว</p>
           <div class="stack">
             <span>Three.js r169</span><span>OrbitControls</span><span>WebGL</span>
             <span>importmap CDN</span><span>Vanilla JS</span><span>CSS Grid</span>
-            <span>Responsive</span><span>No dependencies</span>
+            <span>Glassmorphism</span><span>Responsive</span>
           </div>
         </div>
-
         <div class="panel reveal d1">
-          <h3>✅ Every control works</h3>
+          <h3>✅ ทุกปุ่มใช้งานได้จริง</h3>
           <ul class="checklist">
-            <li><span class="tick">✓</span><span><b>Navigation</b> — smooth-scrolls and highlights the active section.</span></li>
-            <li><span class="tick">✓</span><span><b>Cards</b> — open an accessible modal (Esc / backdrop / ✕ close it).</span></li>
-            <li><span class="tick">✓</span><span><b>Globe controls</b> — pause the spin, drag, zoom, shuffle the glow colour.</span></li>
-            <li><span class="tick">✓</span><span><b>Counters</b> — animate when the Impact section scrolls into view.</span></li>
-            <li><span class="tick">✓</span><span><b>Mobile menu, back‑to‑top, toasts</b> — all wired up.</span></li>
+            <li><span class="tick">✓</span><span><b>เมนูนำทาง</b> — เลื่อนเนียนพร้อมไฮไลต์หมวดที่กำลังอ่าน</span></li>
+            <li><span class="tick">✓</span><span><b>การ์ดทั้ง 6</b> — เปิดหน้าต่างรายละเอียด กด Esc หรือคลิกพื้นหลังเพื่อปิด</span></li>
+            <li><span class="tick">✓</span><span><b>ปุ่มลูกโลก</b> — หยุดหมุน ลากหมุน และสลับสีแสงได้</span></li>
+            <li><span class="tick">✓</span><span><b>ตัวเลขนับขึ้น</b> — วิ่งอัตโนมัติเมื่อเลื่อนถึงหมวดผลกระทบ</span></li>
+            <li><span class="tick">✓</span><span><b>คำถามพบบ่อย ปุ่มสุ่ม และปุ่มกลับขึ้นบน</b> — ใช้งานได้ครบ</span></li>
           </ul>
           <div class="m-actions">
-            <button class="btn btn-primary" id="btnRandomCard">🎲 Open a random sector</button>
-            <button class="btn btn-ghost" id="btnBackTop2">Back to top ↑</button>
+            <button class="btn btn-primary" id="btnRandomCard">🎲 สุ่มเปิดหนึ่งด้าน</button>
+            <button class="btn btn-ghost" id="btnBackTop2">กลับขึ้นบน ↑</button>
           </div>
         </div>
       </div>
     </div>
   </section>
 </main>
-
-<!-- ===== footer ===== -->
+<!-- ===== ส่วนท้าย ===== -->
 <footer id="contact">
   <div class="wrap">
     <div class="foot-grid">
       <div>
-        <a class="logo" href="#home"><span class="mark">AI</span><span>Daily&nbsp;AI<small>three.js demo</small></span></a>
-        <p>A small, practical demonstration of AI applications in daily life — rendered in real time with Three.js and WebGL.</p>
+        <a class="logo" href="#home"><span class="mark">🤖</span><span>ชีวิตประจำวันกับเอไอ<small>AI DAILY LIFE</small></span></a>
+        <p>เว็บไซต์สาธิตการประยุกต์ใช้ปัญญาประดิษฐ์ในชีวิตประจำวัน เรนเดอร์แบบเรียลไทม์ด้วย Three.js และเว็บจีแอล เนื้อหาภาษาไทยทั้งหมด</p>
       </div>
-
       <div class="foot-links">
-        <strong style="font-size:.8rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);">Sections</strong>
-        <a href="#home">Home</a>
-        <a href="#applications">Applications</a>
-        <a href="#impact">Impact</a>
-        <a href="#about">About</a>
+        <strong>หมวดเนื้อหา</strong>
+        <a href="#home">หน้าแรก</a>
+        <a href="#applications">การประยุกต์ใช้</a>
+        <a href="#impact">ผลกระทบ</a>
+        <a href="#day">หนึ่งวันกับเอไอ</a>
       </div>
-
       <div class="foot-links">
-        <strong style="font-size:.8rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);">Resources</strong>
-        <a href="https://threejs.org/docs/" target="_blank" rel="noopener">Three.js docs</a>
-        <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API" target="_blank" rel="noopener">WebGL on MDN</a>
-        <!-- Replace the href below with your repository URL -->
-        <!-- href is overwritten from GITHUB_URL in the script below -->
-        <a href="https://github.com/" target="_blank" rel="noopener" class="gh-link" data-github>Source code</a>
-      </div>
-
-      <div>
-        <!-- Replace the href below with your repository URL -->
-        <a class="gh-btn" href="https://github.com/" target="_blank" rel="noopener" data-github aria-label="View this project on GitHub">
-          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
-          Star on GitHub
-        </a>
+        <strong>แหล่งเรียนรู้</strong>
+        <a href="https://threejs.org/docs/" target="_blank" rel="noopener">เอกสาร Three.js</a>
+        <a href="https://developer.mozilla.org/th/docs/Web/API/WebGL_API" target="_blank" rel="noopener">เว็บจีแอลบน MDN</a>
+        <a href="https://github.com/" target="_blank" rel="noopener">ซอร์สโค้ด</a>
       </div>
     </div>
-
     <div class="copyright">
-      <span>© <span id="year">2026</span> AI in Daily Life · Built with Three.js</span>
-      <span>WebGL · Vanilla JS · No frameworks</span>
+      <span>© <span id="year">2026</span> ปัญญาประดิษฐ์ในชีวิตประจำวัน · สร้างด้วย Three.js</span>
+      <span>เว็บจีแอล · จาวาสคริปต์ล้วน · ไฟล์เดียวจบ</span>
     </div>
   </div>
 </footer>
-
-<!-- ===== modal ===== -->
+<!-- ===== หน้าต่างรายละเอียด ===== -->
 <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
   <div class="modal" id="modal">
-    <button class="m-close" id="modalClose" aria-label="Close dialog">✕</button>
+    <button class="m-close" id="modalClose" aria-label="ปิดหน้าต่าง">✕</button>
     <div class="m-icon" id="mIcon">🏠</div>
-    <span class="m-tag" id="mTag">Sector</span>
-    <h3 id="modalTitle">Title</h3>
+    <span class="m-en" id="mEn">SMART HOME</span>
+    <h3 id="modalTitle">บ้านอัจฉริยะ</h3>
     <p class="m-desc" id="mDesc"></p>
-    <h4>In your day</h4>
+    <h4>ตัวอย่างในชีวิตจริง</h4>
     <ul class="m-list" id="mList"></ul>
     <div class="m-stat" id="mStat"></div>
+    <div class="m-meta" id="mMeta"></div>
     <div class="m-actions">
-      <button class="btn btn-primary" id="mNext">Next sector →</button>
-      <button class="btn btn-ghost" id="mCloseBtn">Close</button>
+      <button class="btn btn-primary" id="mNext">ด้านถัดไป →</button>
+      <button class="btn btn-ghost" id="mCloseBtn">ปิด</button>
     </div>
   </div>
 </div>
-
 <div id="toast" role="status" aria-live="polite"></div>
-<button id="toTop" aria-label="Back to top">↑</button>
-
+<button id="toTop" aria-label="กลับขึ้นด้านบน">↑</button>
 <!-- ============================================================
-     UI LOGIC (classic script → runs even if the Three.js CDN fails)
+     โค้ดส่วนติดต่อ (สคริปต์ธรรมดา ทำงานได้แม้ซีดีเอ็นล้มเหลว)
      ============================================================ -->
 <script>
 (function () {
   "use strict";
-
-  /* ---------------- data ---------------- */
-  var GITHUB_URL = "https://github.com/"; // ← replace with your repo URL (drives every GitHub link)
-
-  // Single source of truth for the footer GitHub links
-  Array.prototype.forEach.call(document.querySelectorAll("[data-github]"), function (a) {
-    a.href = GITHUB_URL;
-  });
-
+  /* ---------------- ข้อมูลทั้ง 6 ด้าน ---------------- */
   var SECTORS = [
     {
       id: "smart-home",
-      icon: "🏠", title: "Smart Home", color: "#4ff2ff",
-      tag: "Ambient intelligence",
-      short: "Thermostats, assistants and cameras that learn your routines and run the house for you.",
-      desc: "Your home already predicts you. Machine learning models study when you wake, how you like your light and temperature, and when the house is empty — then act without being asked.",
+      icon: "🏠",
+      en: "SMART HOME",
+      title: "บ้านอัจฉริยะ",
+      color: "#22d3ee",
+      tag: "บ้านอัจฉริยะ",
+      meta: ["Voice · IoT", "อัตโนมัติ", "ประหยัดพลังงาน"],
+      desc: "ตอนเช้าผ้าม่านเปิดเองตามแสงอาทิตย์ แอร์ปรับ 26 องศาก่อนคุณถึงบ้าน 15 นาที หุ่นยนต์ดูดฝุ่นจำแผนที่ได้ทุกห้อง กล้องหน้าบ้านแยกคนในครอบครัวกับคนแปลกหน้า ค่ำแล้วไฟหรี่เองให้พร้อมนอน ทั้งหมดเรียนรู้จากพฤติกรรมของคุณโดยอัตโนมัติ",
       list: [
-        "Voice assistants transcribing speech with neural networks and answering in milliseconds.",
-        "Learning thermostats cutting heating bills by anticipating your schedule.",
-        "Robot vacuums mapping rooms with LiDAR and avoiding shoes and cables.",
-        "Cameras recognising a familiar face versus a stranger before alerting your phone."
+        "<b>สั่งงานด้วยเสียงภาษาไทย</b> — เปิดปิดแอร์ ไฟ ทีวี และเครื่องซักผ้าโดยไม่ต้องลุก แค่พูดว่าเปิดแอร์หน่อย",
+        "<b>ระบบอัตโนมัติตามกิจวัตร</b> — จดจำเวลาตื่น เวลากลับบ้าน แล้วตั้งฉากบ้านเช้า กลางวัน กลางคืนให้เอง",
+        "<b>ประหยัดพลังงานสูงสุด 40%</b> — เซ็นเซอร์รู้ว่าไม่มีคนอยู่ห้องไหนก็ปิดไฟและแอร์ห้องนั้นทันที",
+        "<b>ความปลอดภัยอัจฉริยะ</b> — ล็อกประตูเองตอนกลางคืน แจ้งเตือนมือถือทันทีเมื่อพบความเคลื่อนไหวผิดปกติ"
       ],
-      stat: "<b>~40%</b> energy saved by AI-tuned heating &amp; cooling vs. a fixed schedule."
+      stat: "<b>~40%</b> ค่าไฟลดลงได้เมื่อใช้แอร์และไฟอัจฉริยะที่เรียนรู้ตารางชีวิต เทียบกับเปิดทิ้งไว้ทั้งวัน"
     },
     {
       id: "healthcare",
-      icon: "🩺", color: "#ff6b9d",
-      title: "Healthcare", tag: "Earlier, cheaper diagnosis",
-      short: "From imaging analysis to 24/7 symptom checkers — AI acts as a second pair of eyes.",
-      desc: "Deep learning models now read medical scans, predict deterioration hours ahead and draft clinical notes, giving clinicians more time with patients and catching what tired eyes miss.",
+      icon: "🏥",
+      en: "HEALTHCARE",
+      title: "การแพทย์",
+      color: "#f472b6",
+      tag: "การแพทย์",
+      meta: ["Imaging · Lab", "วิเคราะห์เลือด", "ตรวจพบโรคเร็ว"],
+      desc: "โรงพยาบาลหลายแห่งใช้เอไอช่วยอ่านฟิล์มเอกซเรย์ปอด ภาพซีทีสมอง และจอประสาทตา วิเคราะห์ผลเลือดหาสัญญาณเบาหวาน ไขมัน และมะเร็งตั้งแต่ยังไม่มีอาการ พร้อมนาฬิกาข้อมือที่เตือนหัวใจเต้นผิดจังหวะได้ก่อนวิกฤต",
       list: [
-        "Radiology AI highlighting tumours and fractures on X-rays, CT and MRI.",
-        "Wearable data flagging irregular heart rhythms like atrial fibrillation.",
-        "Triage chatbots ranking symptom severity before you see a doctor.",
-        "Drug-discovery models screening millions of molecules in days, not years."
+        "<b>อ่านภาพถ่ายรังสี</b> — วงจุดสงสัยก้อนเนื้อ รอยร้าวกระดูก และเลือดออกในสมองให้รังสีแพทย์ตรวจซ้ำ",
+        "<b>วิเคราะห์ผลเลือด</b> — เทียบค่าหลายสิบตัวพร้อมกัน หาแนวโน้มน้ำตาล ไขมัน และค่าตับที่กำลังแย่ลง",
+        "<b>คัดกรองอาการ 24 ชม.</b> — แชตบอตซักประวัติเบื้องต้น จัดลำดับความเร่งด่วนก่อนพบแพทย์จริง",
+        "<b>อุปกรณ์สวมใส่</b> — สมาร์ตวอตช์เตือนหัวใจเต้นผิดจังหวะ ออกซิเจนต่ำ และล้มหมดสติแล้วแจ้งญาติ"
       ],
-      stat: "<b>2nd opinion</b> — AI reads alongside the radiologist, never instead of them."
+      stat: "<b>เร็วขึ้นหลายเท่า</b> — เอไอร่างรายงานภาพถ่ายให้แพทย์ตรวจทาน ลดเวลารอผลจากหลายวันเหลือไม่กี่ชั่วโมง"
     },
     {
       id: "education",
-      icon: "📚", title: "Education", color: "#ffd166",
-      tag: "Learning at your pace",
-      short: "Personal tutors that adapt to you, instant feedback and lessons that rebuild themselves around your gaps.",
-      desc: "Adaptive learning systems track every answer you give and reshape the next question. The result is a tutor that never gets impatient and never moves on until you do.",
+      icon: "🎓",
+      en: "EDUCATION",
+      title: "การศึกษา",
+      color: "#fbbf24",
+      tag: "การศึกษา",
+      meta: ["Personalized · Tutor", "ครูเอไอ", "เข้าถึงง่าย"],
+      desc: "เด็กแต่ละคนเก่งไม่เหมือนกัน ครูเอไอจึงปรับโจทย์ตามจุดอ่อนของแต่ละคน ใครอ่อนเศษส่วนก็ได้แบบฝึกเพิ่ม ใครเก่งแล้วก็ข้ามไปบทท้าทาย พร้อมตรวจงานและอธิบายวิธีคิดทีละขั้น มีคำบรรยายและแปลภาษาช่วยให้ทุกคนเข้าถึงบทเรียนได้",
       list: [
-        "Adaptive exercise engines that re-teach the exact concept you fumbled.",
-        "Instant, explained feedback on essays, code and maths problems.",
-        "Live translation and captions opening lectures in any language.",
-        "Lesson plans generated for a teacher in seconds, then human-edited."
+        "<b>บทเรียนเฉพาะบุคคล</b> — ระบบรู้ว่าคุณพลาดเรื่องไหน แล้วสร้างโจทย์ซ่อมเสริมเรื่องนั้นโดยเฉพาะ",
+        "<b>ครูเอไอตลอด 24 ชม.</b> — ถามตอนตีสองก็ตอบ พร้อมยกตัวอย่างจนกว่าจะเข้าใจ ไม่หงุดหงิด",
+        "<b>ตรวจงานพร้อมคำอธิบาย</b> — ไม่ได้บอกแค่ถูกผิด แต่แสดงวิธีคิดทีละขั้นทั้งเรียงความ โค้ด และคณิต",
+        "<b>การเข้าถึงที่เท่าเทียม</b> — พากย์เสียง คำบรรยายอัตโนมัติ และแปลภาษา ช่วยผู้พิการและเด็กต่างภาษา"
       ],
-      stat: "<b>24/7</b> — help available at the moment curiosity strikes, not just in class."
+      stat: "<b>24/7</b> — ความช่วยเหลือพร้อมตอนที่ความสงสัยเกิด ไม่ต้องรอคาบเรียนถัดไป"
     },
     {
       id: "transportation",
-      icon: "🚗", title: "Transportation", color: "#7dff9b",
-      tag: "Getting there smarter",
-      short: "Route prediction, traffic-light timing, driver assistance and the sensors behind autonomy.",
-      desc: "Every map app you open is an AI system: it ingests live traffic from millions of phones, forecasts congestion and picks the route that will still be fastest in fifteen minutes.",
+      icon: "🚗",
+      en: "TRANSPORTATION",
+      title: "การขนส่ง",
+      color: "#34d399",
+      tag: "การขนส่ง",
+      meta: ["Route · Traffic", "ทำนายจราจร", "รถอัตโนมัติ"],
+      desc: "ทุกครั้งที่เปิดแอปแผนที่ เอไอกำลังอ่านข้อมูลรถนับล้านคันเพื่อทำนายว่ารถจะติดตรงไหนในอีก 15 นาที แล้วเลือกเส้นที่เร็วที่สุดให้คุณ รถรุ่นใหม่ช่วยเบรกฉุกเฉิน เตือนออกนอกเลน และถอยจอดเอง ส่วนรถไร้คนขับใช้กล้องและเรดาร์ตัดสินใจทุกเสี้ยววินาที",
       list: [
-        "Navigation apps predicting arrival times from live traffic patterns.",
-        "Adaptive cruise control and lane keeping using cameras and radar.",
-        "Ride-hailing matching you to a driver with demand forecasting.",
-        "Transit systems adjusting frequency before the crowd arrives."
+        "<b>เส้นทางเร็วที่สุดแบบเรียลไทม์</b> — เลี่ยงจุดรถติด อุบัติเหตุ และถนนปิด พร้อมเวลาถึงที่แม่นยำ",
+        "<b>ทำนายการจราจรล่วงหน้า</b> — เตือนให้ออกเร็วขึ้น 10 นาทีถ้าพบว่าฝนตกแล้วรถจะติดหนัก",
+        "<b>ระบบช่วยขับ</b> — รักษาระยะห่างคันหน้า เบรกเองเมื่อมีคนตัดหน้า และดึงพวงมาลัยกลับเข้าเลน",
+        "<b>ขนส่งมวลชนอัจฉริยะ</b> — ปรับความถี่รถเมล์และรถไฟฟ้าตามจำนวนผู้โดยสารจริงในแต่ละช่วง"
       ],
-      stat: "<b>Minutes back</b> — smarter routing routinely shaves time off a daily commute."
+      stat: "<b>ประหยัดนาทีทุกวัน</b> — เส้นทางอัจฉริยะช่วยย่นเวลาเดินทางช่วงเร่งด่วนได้ชัดเจนโดยเฉพาะในกรุงเทพฯ"
     },
     {
       id: "finance",
-      icon: "💰", title: "Finance", color: "#b48bff",
-      tag: "Trust every transaction",
-      short: "Fraud caught in milliseconds, smarter budgets and risk scored objectively.",
-      desc: "When your card is declined for a purchase you didn't make, a model scored hundreds of signals — amount, location, device, timing — in the few hundred milliseconds before approval.",
+      icon: "💰",
+      en: "FINANCE",
+      title: "การเงิน",
+      color: "#a855f7",
+      tag: "การเงิน",
+      meta: ["Fraud · Budget", "กันโกง", "วางแผนลงทุน"],
+      desc: "ทุกครั้งที่รูดบัตร เอไอให้คะแนนความเสี่ยงจากยอดเงิน สถานที่ อุปกรณ์ และเวลาในไม่ถึง 0.1 วินาที ถ้าพบยอดแปลกจะล็อกและแจ้งเตือนทันที นอกจากนี้ยังแยกหมวดค่าใช้จ่าย สรุปงบรายเดือน และวิเคราะห์พอร์ตกองทุนให้เข้าใจง่าย",
       list: [
-        "Real-time fraud detection scoring every swipe against your habits.",
-        "Budget apps categorising transactions and forecasting the month ahead.",
-        "Credit scoring that weighs thousands of variables at once.",
-        "Algorithmic trading and risk modelling running continuously."
+        "<b>จับทุจริตแบบเรียลไทม์</b> — ยอดรูดต่างประเทศตอนตีสามทั้งที่เจ้าของอยู่ไทยจะถูกสกัดทันที",
+        "<b>งบอัตโนมัติ</b> — แยกค่าข้าว ค่าเดินทาง ค่าชอปปิงเอง พร้อมเตือนก่อนเงินหมดสิ้นเดือน",
+        "<b>ประเมินความเสี่ยงสินเชื่อ</b> — พิจารณาปัจจัยหลายพันตัวพร้อมกันอย่างเป็นกลางและรวดเร็ว",
+        "<b>ผู้ช่วยลงทุน</b> — สรุปแนวโน้มพอร์ต เตือนตอนพอร์ตกระจุกตัว และจำลองแผนเกษียณ"
       ],
-      stat: "<b>&lt;100 ms</b> — the window in which a fraud decision must be made."
+      stat: "<b>&lt;100 มิลลิวินาที</b> — เวลาที่ระบบต้องตัดสินใจอนุมัติหรือสกัดธุรกรรมน่าสงสัยแต่ละครั้ง"
+    },
+    {
+      id: "entertainment",
+      icon: "🎬",
+      en: "ENTERTAINMENT",
+      title: "ความบันเทิง",
+      color: "#fb7185",
+      tag: "ความบันเทิง",
+      meta: ["Recommend · Create", "แนะนำตรงใจ", "สร้างคอนเทนต์"],
+      desc: "หน้าแรกของแอปหนัง เพลง และวิดีโอสั้นถูกจัดมาเพื่อคุณคนเดียวจากประวัติการดู การกดข้าม และการกดถูกใจ ครีเอเตอร์ใช้เอไอตัดต่อคลิป พากย์เสียงไทย แต่งเพลงประกอบ และสร้างตัวละครเกมที่คุยโต้ตอบเหมือนคนจริง",
+      list: [
+        "<b>แนะนำตรงรสนิยม</b> — หนังและเพลงที่โผล่มาตรงใจเพราะเรียนรู้ทุกคลิก ทุกการกดข้าม",
+        "<b>สร้างเพลงและวิดีโอ</b> — แต่งดนตรี ตัดไฮไลต์ ใส่ซับไตเติล และพากย์เสียงได้ในไม่กี่นาที",
+        "<b>เกมที่ฉลาดขึ้น</b> — ตัวละครปรับความยากตามฝีมือผู้เล่น คุยโต้ตอบแบบไม่สคริปต์ตายตัว",
+        "<b>ประสบการณ์เฉพาะตัว</b> — ปกหนัง ตัวอย่าง และเพลย์ลิสต์ของแต่ละคนไม่เหมือนกันเลย"
+      ],
+      stat: "<b>กว่า 70%</b> ของสิ่งที่คนดูกดเล่น มาจากแถบแนะนำอัตโนมัติ ไม่ใช่การค้นหาเอง"
     }
   ];
-
-  /* ---------------- tiny helpers ---------------- */
+  /* ---------------- ตัวช่วย ---------------- */
   function $(s, c) { return (c || document).querySelector(s); }
   function $$(s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); }
-
   var toastEl = $("#toast"), toastTimer;
   function toast(msg) {
     toastEl.textContent = msg;
     toastEl.classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { toastEl.classList.remove("show"); }, 2200);
+    toastTimer = setTimeout(function () { toastEl.classList.remove("show"); }, 2300);
   }
-
-  /* ---------------- accent colour plumbing ---------------- */
-  var ACCENTS = ["#4ff2ff", "#7dff9b", "#ffd166", "#ff6b9d", "#b48bff", "#8affc8"];
+  /* ---------------- ระบบสีแสง ---------------- */
+  var ACCENTS = ["#22d3ee", "#a855f7", "#34d399", "#fbbf24", "#f472b6", "#fb7185"];
   var accentIndex = 0;
   var accentListeners = [];
-
   function onAccent(fn) { accentListeners.push(fn); }
   function setAccent(color, silent) {
-    document.documentElement.style.setProperty("--accent", color);
+    document.documentElement.style.setProperty("--cyan", color);
     accentListeners.forEach(function (fn) { try { fn(color); } catch (e) {} });
-    if (!silent) toast("Glow colour updated ✨");
+    if (!silent) toast("เปลี่ยนสีแสงแล้ว ✨");
   }
-
-  /* ---------------- build cards ---------------- */
-  var grid = $("#cardGrid");
-  SECTORS.forEach(function (s, i) {
-    var el = document.createElement("article");
-    el.className = "card reveal d" + (i % 4);
-    el.style.setProperty("--card-color", s.color);
-    el.setAttribute("role", "button");
-    el.setAttribute("tabindex", "0");
-    el.setAttribute("aria-label", "Open details about " + s.title);
-    el.dataset.index = i;
-    el.innerHTML =
-      '<div class="card-icon">' + s.icon + '</div>' +
-      '<span class="card-tag">' + s.tag + '</span>' +
-      '<h3>' + s.title + '</h3>' +
-      '<p>' + s.short + '</p>' +
-      '<span class="card-go">Learn more →</span>';
-
-    // pointer-tracked glow
+  /* ---------------- ผูกการ์ดทั้ง 6 ---------------- */
+  var cards = $$(".card");
+  cards.forEach(function (el) {
+    var i = parseInt(el.dataset.index || "0", 10);
+    var s = SECTORS[i];
+    if (!s) return;
     el.addEventListener("pointermove", function (e) {
       var r = el.getBoundingClientRect();
       el.style.setProperty("--mx", ((e.clientX - r.left) / r.width) * 100 + "%");
       el.style.setProperty("--my", ((e.clientY - r.top) / r.height) * 100 + "%");
     });
-    // recolour the globe while hovering
     el.addEventListener("pointerenter", function () { setAccent(s.color, true); });
     el.addEventListener("click", function () { openModal(i); });
     el.addEventListener("keydown", function (e) {
       if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openModal(i); }
     });
-    grid.appendChild(el);
   });
-
-  /* ---------------- modal ---------------- */
+  /* ---------------- ตัวกรอง ---------------- */
+  $$(".filter-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      $$(".filter-btn").forEach(function (b) { b.classList.remove("active"); });
+      btn.classList.add("active");
+      var f = btn.dataset.filter;
+      var visible = 0;
+      cards.forEach(function (c) {
+        var show = (f === "all") || (c.dataset.group === f);
+        c.style.display = show ? "" : "none";
+        if (show) visible++;
+      });
+      var label = btn.textContent.trim();
+      toast("แสดง " + visible + " ด้าน · " + label);
+    });
+  });
+  /* ---------------- หน้าต่างรายละเอียด ---------------- */
   var backdrop = $("#modalBackdrop"), modal = $("#modal"), lastFocus = null, currentIndex = 0;
-
   function renderModal(i) {
     var s = SECTORS[i];
     currentIndex = i;
     modal.style.setProperty("--modal-color", s.color);
     $("#mIcon").textContent = s.icon;
-    $("#mTag").textContent = s.tag;
+    $("#mEn").textContent = s.en;
     $("#modalTitle").textContent = s.title;
     $("#mDesc").textContent = s.desc;
     $("#mList").innerHTML = s.list.map(function (t) { return "<li>" + t + "</li>"; }).join("");
     $("#mStat").innerHTML = s.stat;
+    $("#mMeta").innerHTML = s.meta.map(function (m) { return "<span>" + m + "</span>"; }).join("");
     setAccent(s.color, true);
   }
-
   function openModal(i) {
     lastFocus = document.activeElement;
     renderModal(i);
     backdrop.classList.add("open");
     document.body.style.overflow = "hidden";
     $("#modalClose").focus();
-    toast(SECTORS[i].title + " · sector " + (i + 1) + "/" + SECTORS.length);
+    toast(SECTORS[i].title + " · ด้านที่ " + (i + 1) + "/6");
   }
-
   function closeModal() {
     backdrop.classList.remove("open");
     document.body.style.overflow = "";
     if (lastFocus) lastFocus.focus();
   }
-
   $("#modalClose").addEventListener("click", closeModal);
   $("#mCloseBtn").addEventListener("click", closeModal);
   backdrop.addEventListener("click", function (e) { if (e.target === backdrop) closeModal(); });
   $("#mNext").addEventListener("click", function () {
     renderModal((currentIndex + 1) % SECTORS.length);
-    toast("Sector " + ((currentIndex + 1) % SECTORS.length + 1) + "/" + SECTORS.length);
+    toast("ด้านที่ " + (currentIndex + 1) + "/6 · " + SECTORS[currentIndex].title);
   });
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape" && backdrop.classList.contains("open")) closeModal();
-    // arrow navigation while the modal is open
     if (backdrop.classList.contains("open") && (e.key === "ArrowRight" || e.key === "ArrowLeft")) {
       e.preventDefault();
       renderModal((currentIndex + (e.key === "ArrowRight" ? 1 : SECTORS.length - 1)) % SECTORS.length);
     }
   });
-
-  /* ---------------- navigation ---------------- */
+  /* ---------------- เมนู ---------------- */
   var navToggle = $("#navToggle"), mainNav = $("#mainNav");
   navToggle.addEventListener("click", function () {
     var open = mainNav.classList.toggle("open");
@@ -868,8 +1893,6 @@
       navToggle.textContent = "☰";
     });
   });
-
-  // active section highlight
   var links = $$(".nav-link");
   if ("IntersectionObserver" in window) {
     var navObserver = new IntersectionObserver(function (entries) {
@@ -880,12 +1903,10 @@
         });
       });
     }, { rootMargin: "-45% 0px -50% 0px", threshold: 0 });
-    ["home", "applications", "impact", "about"].forEach(function (id) {
+    ["home", "applications", "impact", "day", "faq", "about"].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) navObserver.observe(el);
     });
-
-    // reveal-on-scroll
     var revObserver = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
         if (en.isIntersecting) { en.target.classList.add("visible"); revObserver.unobserve(en.target); }
@@ -895,8 +1916,22 @@
   } else {
     $$(".reveal").forEach(function (el) { el.classList.add("visible"); });
   }
-
-  /* ---------------- animated counters ---------------- */
+  /* ---------------- คำถามพบบ่อย ---------------- */
+  $$(".faq-item").forEach(function (item) {
+    var q = $(".faq-q", item), a = $(".faq-a", item);
+    q.addEventListener("click", function () {
+      var open = item.classList.contains("open");
+      $$(".faq-item.open").forEach(function (o) {
+        o.classList.remove("open");
+        $(".faq-a", o).style.maxHeight = null;
+      });
+      if (!open) {
+        item.classList.add("open");
+        a.style.maxHeight = a.scrollHeight + "px";
+      }
+    });
+  });
+  /* ---------------- ตัวเลขนับขึ้น ---------------- */
   var counted = false;
   function runCounters() {
     if (counted) return;
@@ -905,7 +1940,7 @@
       var to = parseFloat(el.dataset.to) || 0;
       var dec = parseInt(el.dataset.dec || "0", 10);
       var suffix = el.dataset.suffix || "";
-      var start = null, dur = 1500;
+      var start = null, dur = 1600;
       function step(ts) {
         if (!start) start = ts;
         var p = Math.min((ts - start) / dur, 1);
@@ -923,53 +1958,41 @@
     }, { threshold: 0.35 });
     if (impact) statObserver.observe(impact);
   } else { runCounters(); }
-
-  /* ---------------- hero + misc buttons ---------------- */
-  $("#btnExplore").addEventListener("click", function () {
-    document.getElementById("applications").scrollIntoView({ behavior: "smooth", block: "start" });
-    toast("Showing the 5 sectors 👇");
-  });
-
+  /* ---------------- ปุ่มฮีโร่และอื่น ๆ ---------------- */
   var spinPaused = false;
   $("#btnSpin").addEventListener("click", function () {
     spinPaused = !spinPaused;
-    this.textContent = spinPaused ? "▶ Resume globe" : "⏸ Pause globe";
+    this.textContent = spinPaused ? "▶ หมุนต่อ" : "⏸ หยุดการหมุน";
     this.setAttribute("aria-pressed", String(spinPaused));
     this.classList.toggle("on", spinPaused);
     window.dispatchEvent(new CustomEvent("globe:spin", { detail: { paused: spinPaused } }));
-    toast(spinPaused ? "Globe paused" : "Globe spinning again 🌍");
+    toast(spinPaused ? "หยุดลูกโลกแล้ว" : "ลูกโลกหมุนต่อแล้ว 🌍");
   });
-
   $("#btnAccent").addEventListener("click", function () {
     accentIndex = (accentIndex + 1) % ACCENTS.length;
     setAccent(ACCENTS[accentIndex]);
   });
-
   $("#btnRandomCard").addEventListener("click", function () {
     openModal(Math.floor(Math.random() * SECTORS.length));
   });
-
   $("#btnBackTop2").addEventListener("click", function () {
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
-
   var toTop = $("#toTop");
   toTop.addEventListener("click", function () { window.scrollTo({ top: 0, behavior: "smooth" }); });
-
-  var sceneEl = $("#scene");
+  var bgEl = $("#bg3d");
   function onScroll() {
     var y = window.scrollY || window.pageYOffset;
     toTop.classList.toggle("show", y > 600);
-    // fade the 3D background as content takes over
-    var fade = Math.max(0.3, 1 - y / (window.innerHeight * 0.9));
-    sceneEl.style.opacity = window.matchMedia("(min-width: 761px)").matches ? fade.toFixed(3) : "";
+    var fade = Math.max(0.35, 1 - y / (window.innerHeight * 1.1));
+    bgEl.style.opacity = window.matchMedia("(min-width: 761px)").matches ? fade.toFixed(3) : "";
   }
   window.addEventListener("scroll", onScroll, { passive: true });
   onScroll();
-
   $("#year").textContent = new Date().getFullYear();
-
-  // expose a small API for the 3D module
+  /* ---------------- แถบวิ่งซ้ำสองชุด ---------------- */
+  var track = $("#marqueeTrack");
+  track.innerHTML += track.innerHTML;
   window.AIDaily = {
     onAccent: onAccent,
     getAccent: function () { return ACCENTS[accentIndex]; },
@@ -977,9 +2000,8 @@
   };
 })();
 </script>
-
 <!-- ============================================================
-     3D SCENE (ES module + importmap)
+     ฉาก 3 มิติ (โมดูล + importmap)
      ============================================================ -->
 <script type="importmap">
 {
@@ -989,82 +2011,74 @@
   }
 }
 </script>
-
 <script type="module">
-  const host = document.getElementById("scene");
-  const fallback = document.getElementById("scene-fallback");
+  const host = document.getElementById("bg3d");
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
   try {
     const THREE = await import("three");
     const { OrbitControls } = await import("three/addons/controls/OrbitControls.js");
-    fallback.style.display = "none"; // WebGL version takes over
     init(THREE, OrbitControls);
   } catch (err) {
-    console.warn("Three.js failed to load, using CSS fallback globe.", err);
-    if (window.AIDaily) window.AIDaily.toast("3D mode unavailable — using flat fallback");
+    console.warn("โหลด Three.js ไม่สำเร็จ", err);
+    if (window.AIDaily) window.AIDaily.toast("โหมด 3 มิติไม่พร้อมใช้งาน");
   }
-
   function init(THREE, OrbitControls) {
-    const api = window.AIDaily || { onAccent: () => {}, getAccent: () => "#4ff2ff" };
+    const api = window.AIDaily || { onAccent: () => {}, getAccent: () => "#22d3ee" };
     let accent = api.getAccent();
-
-    /* ---------- renderer / scene / camera ---------- */
+    /* ---------- ตัวเรนเดอร์ ฉาก กล้อง ---------- */
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0x000000, 0);
     host.appendChild(renderer.domElement);
-
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 200);
-    camera.position.set(0, 0.6, 7.4);
-
+    scene.fog = new THREE.FogExp2(0x05060f, 0.012);
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 220);
+    camera.position.set(0, 0.7, 7.6);
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
     controls.enablePan = false;
-    controls.enableZoom = false;    // keep native page scrolling / pinching intact
+    controls.enableZoom = false;
     controls.minDistance = 4.4;
     controls.maxDistance = 12;
     controls.autoRotate = !reduceMotion;
     controls.autoRotateSpeed = 0.55;
     controls.rotateSpeed = 0.55;
-
-    // The canvas sits behind the content. On touch devices it must ignore
-    // pointers entirely so the page still scrolls; on desktop (fine pointer)
-    // the empty gutters pass through and you can drag to orbit the globe.
     const finePointer = window.matchMedia("(pointer: fine)").matches;
     host.classList.toggle("interactive", finePointer);
-
-    /* ---------- globe group ---------- */
+    /* ---------- กลุ่มลูกโลก ---------- */
     const globe = new THREE.Group();
     scene.add(globe);
-    // push the globe to the right so the hero copy stays readable
     const isNarrow = () => window.innerWidth < 761;
-    const placeGlobe = () => { globe.position.x = isNarrow() ? 0 : 2.15; globe.position.y = isNarrow() ? -0.2 : 0.1; };
+    const placeGlobe = () => {
+      globe.position.x = isNarrow() ? 0 : 2.2;
+      globe.position.y = isNarrow() ? -0.3 : 0.1;
+    };
     placeGlobe();
-
     const R = 1.75;
-
-    // 1. wireframe sphere
+    // 1. โครงลวดหลัก
     const wireMat = new THREE.MeshBasicMaterial({
       color: new THREE.Color(accent), wireframe: true, transparent: true, opacity: 0.34
     });
-    const wire = new THREE.Mesh(new THREE.SphereGeometry(R, 40, 26), wireMat);
+    const wire = new THREE.Mesh(new THREE.SphereGeometry(R, 42, 28), wireMat);
     globe.add(wire);
-
-    // 2. dark inner core so the wireframe reads against it
+    // 2. โครงลวดชั้นที่สองสีม่วง
+    const wire2Mat = new THREE.MeshBasicMaterial({
+      color: new THREE.Color("#a855f7"), wireframe: true, transparent: true, opacity: 0.12
+    });
+    const wire2 = new THREE.Mesh(new THREE.SphereGeometry(R * 1.04, 24, 16), wire2Mat);
+    globe.add(wire2);
+    // 3. แกนกลางทึบ
     const core = new THREE.Mesh(
       new THREE.SphereGeometry(R * 0.985, 48, 32),
       new THREE.MeshBasicMaterial({ color: 0x060a18, transparent: true, opacity: 0.92 })
     );
     globe.add(core);
-
-    // 3. glow / atmosphere shell
+    // 4. แสงบรรยากาศ
     const glowUniforms = { glowColor: { value: new THREE.Color(accent) } };
     const glow = new THREE.Mesh(
-      new THREE.SphereGeometry(R * 1.28, 48, 32),
+      new THREE.SphereGeometry(R * 1.30, 48, 32),
       new THREE.ShaderMaterial({
         uniforms: glowUniforms,
         vertexShader: `
@@ -1087,18 +2101,17 @@
       })
     );
     globe.add(glow);
-
-    // 4. "cities" — points distributed over the surface (Fibonacci sphere)
-    const CITY_COUNT = 700;
+    // 5. จุดแสงเมืองบนผิวโลก
+    const CITY_COUNT = 750;
     const cityPos = new Float32Array(CITY_COUNT * 3);
     const golden = Math.PI * (3 - Math.sqrt(5));
     for (let i = 0; i < CITY_COUNT; i++) {
       const y = 1 - (i / (CITY_COUNT - 1)) * 2;
       const r = Math.sqrt(Math.max(0, 1 - y * y));
       const theta = golden * i;
-      cityPos[i * 3] = Math.cos(theta) * r * R * 1.005;
-      cityPos[i * 3 + 1] = y * R * 1.005;
-      cityPos[i * 3 + 2] = Math.sin(theta) * r * R * 1.005;
+      cityPos[i * 3] = Math.cos(theta) * r * R * 1.006;
+      cityPos[i * 3 + 1] = y * R * 1.006;
+      cityPos[i * 3 + 2] = Math.sin(theta) * r * R * 1.006;
     }
     const cityGeo = new THREE.BufferGeometry();
     cityGeo.setAttribute("position", new THREE.BufferAttribute(cityPos, 3));
@@ -1108,8 +2121,7 @@
     });
     const cities = new THREE.Points(cityGeo, cityMat);
     globe.add(cities);
-
-    // 5. connection arcs with travelling pulses
+    // 6. เส้นเชื่อมพร้อมแสงวิ่ง
     const arcMat = new THREE.LineBasicMaterial({
       color: new THREE.Color(accent), transparent: true, opacity: 0.55,
       blending: THREE.AdditiveBlending, depthWrite: false
@@ -1137,7 +2149,6 @@
       const geo = new THREE.BufferGeometry().setFromPoints(pts);
       const line = new THREE.Line(geo, arcMat);
       globe.add(line);
-
       const pulseGeo = new THREE.BufferGeometry();
       const pulseAttr = new THREE.BufferAttribute(new Float32Array(3), 3);
       pulseGeo.setAttribute("position", pulseAttr);
@@ -1146,12 +2157,11 @@
       globe.add(pulse);
       arcs.push({ curve, pulse, pulseAttr, t: Math.random(), speed: 0.10 + Math.random() * 0.16 });
     }
-
-    // 6. atmosphere particles (drifting shell)
-    const P_COUNT = 1400;
+    // 7. เปลือกอนุภาคบรรยากาศ
+    const P_COUNT = 1500;
     const pPos = new Float32Array(P_COUNT * 3);
     for (let i = 0; i < P_COUNT; i++) {
-      const v = randomOnSphere(2.1 + Math.random() * 2.6);
+      const v = randomOnSphere(2.1 + Math.random() * 2.7);
       pPos[i * 3] = v.x; pPos[i * 3 + 1] = v.y; pPos[i * 3 + 2] = v.z;
     }
     const pGeo = new THREE.BufferGeometry();
@@ -1162,22 +2172,26 @@
     });
     const particles = new THREE.Points(pGeo, particleMat);
     globe.add(particles);
-
-    // 7. starfield
-    const S_COUNT = 900;
+    // 8. ดวงดาวพื้นหลังทั้งหน้า
+    const S_COUNT = 1000;
     const sPos = new Float32Array(S_COUNT * 3);
+    const sCol = new Float32Array(S_COUNT * 3);
+    const cA = new THREE.Color("#67e8f9"), cB = new THREE.Color("#c084fc"), cW = new THREE.Color("#e2e8f0");
     for (let i = 0; i < S_COUNT; i++) {
-      const v = randomOnSphere(26 + Math.random() * 34);
+      const v = randomOnSphere(26 + Math.random() * 40);
       sPos[i * 3] = v.x; sPos[i * 3 + 1] = v.y; sPos[i * 3 + 2] = v.z;
+      const pick = Math.random();
+      const c = pick < 0.4 ? cA : pick < 0.7 ? cB : cW;
+      sCol[i * 3] = c.r; sCol[i * 3 + 1] = c.g; sCol[i * 3 + 2] = c.b;
     }
     const sGeo = new THREE.BufferGeometry();
     sGeo.setAttribute("position", new THREE.BufferAttribute(sPos, 3));
+    sGeo.setAttribute("color", new THREE.BufferAttribute(sCol, 3));
     const stars = new THREE.Points(sGeo, new THREE.PointsMaterial({
-      color: 0xbcd0ff, size: 0.16, transparent: true, opacity: 0.7, depthWrite: false
+      size: 0.18, vertexColors: true, transparent: true, opacity: 0.75, depthWrite: false
     }));
     scene.add(stars);
-
-    // 8. satellites on tilted orbits
+    // 9. ดาวเทียมบนวงโคจรเอียง
     const sats = [];
     const orbitTilt = [
       { rx: 0.0, rz: 0.35, ry: 0.0 },
@@ -1187,7 +2201,7 @@
     orbitTilt.forEach((t, i) => {
       const ring = new THREE.Group();
       ring.rotation.set(t.rx, t.ry, t.rz);
-      const rad = 2.35 + i * 0.28;
+      const rad = 2.4 + i * 0.3;
       const ringMesh = new THREE.Mesh(
         new THREE.TorusGeometry(rad, 0.006, 8, 140),
         new THREE.MeshBasicMaterial({
@@ -1204,8 +2218,7 @@
       globe.add(ring);
       sats.push({ ring, sat, rad, angle: i * 2.1, speed: 0.32 + i * 0.13 });
     });
-
-    /* ---------- accent colour sync ---------- */
+    /* ---------- ซิงก์สีแสง ---------- */
     const accentTargets = [wireMat, cityMat, arcMat, particleMat];
     api.onAccent && api.onAccent((color) => {
       accent = color;
@@ -1213,17 +2226,14 @@
       accentTargets.forEach((m) => m.color.copy(c));
       glowUniforms.glowColor.value.copy(c);
       sats.forEach(({ ring }) => ring.children[0].material.color.copy(c));
-      document.documentElement.style.setProperty("--accent", color);
     });
-
-    /* ---------- pause / resume spin ---------- */
+    /* ---------- หยุดหมุน ---------- */
     let spinPaused = reduceMotion;
     window.addEventListener("globe:spin", (e) => {
       spinPaused = !!e.detail.paused;
       controls.autoRotate = !spinPaused;
     });
-
-    /* ---------- responsive ---------- */
+    /* ---------- ปรับขนาดตามหน้าจอ ---------- */
     function resize() {
       const w = window.innerWidth, h = window.innerHeight;
       camera.aspect = w / h;
@@ -1231,24 +2241,31 @@
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.setSize(w, h);
       placeGlobe();
-      // on small screens the globe sits behind the copy — pull back a bit
-      if (isNarrow() && camera.position.length() < 8) camera.position.setLength(8.4);
+      if (isNarrow() && camera.position.length() < 8) camera.position.setLength(8.6);
     }
     window.addEventListener("resize", resize);
     resize();
-
-    /* ---------- animate ---------- */
+    /* ---------- พารัลแลกซ์เมาส์ ---------- */
+    const pointer = { x: 0, y: 0 };
+    const smooth = { x: 0, y: 0 };
+    window.addEventListener("pointermove", (e) => {
+      pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+      pointer.y = (e.clientY / window.innerHeight) * 2 - 1;
+    }, { passive: true });
+    /* ---------- ลูปแอนิเมชัน ---------- */
     const clock = new THREE.Clock();
     function animate() {
       requestAnimationFrame(animate);
       const dt = Math.min(clock.getDelta(), 0.05);
       const t = clock.elapsedTime;
-
+      smooth.x += (pointer.x - smooth.x) * 0.04;
+      smooth.y += (pointer.y - smooth.y) * 0.04;
       if (!spinPaused) {
         wire.rotation.y += dt * 0.12;
+        wire2.rotation.y -= dt * 0.05;
+        wire2.rotation.x += dt * 0.02;
         core.rotation.y += dt * 0.12;
         cities.rotation.y += dt * 0.12;
-        // arcs + pulses share the globe, animate their own travelling phase
         arcs.forEach((a) => {
           a.t = (a.t + dt * a.speed) % 1;
           const p = a.curve.getPointAt(a.t);
@@ -1264,24 +2281,16 @@
         stars.rotation.y += dt * 0.006;
         glow.scale.setScalar(1 + Math.sin(t * 1.1) * 0.012);
       }
-
-      // subtle parallax from the pointer
-      globe.rotation.x = pointer.y * 0.12 + Math.sin(t * 0.3) * 0.03;
-      globe.rotation.z = -pointer.x * 0.05;
-
+      globe.rotation.x = smooth.y * 0.12 + Math.sin(t * 0.3) * 0.03;
+      globe.rotation.z = -smooth.x * 0.05;
+      camera.position.x = smooth.x * 0.35;
+      camera.position.y = 0.7 - smooth.y * 0.25;
+      camera.lookAt(globe.position);
       controls.update();
       renderer.render(scene, camera);
     }
-
-    /* ---------- pointer parallax (page-level, not canvas) ---------- */
-    const pointer = { x: 0, y: 0 };
-    window.addEventListener("pointermove", (e) => {
-      pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
-      pointer.y = (e.clientY / window.innerHeight) * 2 - 1;
-    }, { passive: true });
-
     animate();
-    console.log("%c🌍 AI in Daily Life · Three.js scene ready", "color:#4ff2ff;font-weight:bold");
+    console.log("%c🌍 ปัญญาประดิษฐ์ในชีวิตประจำวัน · Three.js ready", "color:#22d3ee;font-weight:bold");
   }
 </script>
 </body>
