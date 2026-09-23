@@ -39,6 +39,14 @@
   --shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
   --font-thai: "Noto Sans Thai", "Space Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-en: "Space Grotesk", "Noto Sans Thai", system-ui, sans-serif;
+  /* premium tokens */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.2, 0.9, 0.25, 1.2);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --shadow-card: 0 24px 70px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0,0,0,0.4);
+  --shadow-card-hover: 0 32px 80px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255,255,255,0.06), 0 0 44px rgba(34, 211, 238, 0.16);
+  --glass-hi: linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0) 38%);
+  --ring: 0 0 0 3px rgba(34, 211, 238, 0.45);
 }
 * {
   box-sizing: border-box;
@@ -49,6 +57,10 @@
 }
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--header-h) + 18px);
+}
+@media (prefers-reduced-motion: no-preference) {
+  html:focus-within { scroll-behavior: smooth; }
 }
 body {
   margin: 0;
@@ -66,6 +78,41 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
+/* film-grain + vignette polish */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+}
+::-webkit-scrollbar { width: 11px; }
+::-webkit-scrollbar-track { background: #070917; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--cyan), var(--purple));
+  border-radius: 8px;
+  border: 2px solid #070917;
+}
+:focus-visible {
+  outline: 2px solid var(--cyan-soft);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+.skip-link {
+  position: fixed;
+  top: -60px;
+  left: 16px;
+  z-index: 400;
+  background: var(--cyan);
+  color: #04060f;
+  font-weight: 800;
+  padding: 10px 18px;
+  border-radius: 999px;
+  transition: top 0.25s var(--ease-out);
+}
+.skip-link:focus { top: 12px; }
 ::selection {
   background: var(--cyan);
   color: #04060f;
@@ -190,12 +237,13 @@ section {
 h1,
 h2,
 h3 {
-  line-height: 1.35;
+  line-height: 1.28;
   margin: 0 0 0.5em;
-  letter-spacing: 0;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
 }
 h2 {
-  font-size: clamp(1.65rem, 3.4vw, 2.5rem);
+  font-size: clamp(1.7rem, 3.4vw, 2.55rem);
   font-weight: 800;
 }
 h2 .grad {
@@ -206,13 +254,15 @@ h2 .grad {
   color: transparent;
 }
 .section-head {
-  max-width: 700px;
-  margin-bottom: 40px;
+  max-width: 720px;
+  margin-bottom: 44px;
 }
 .section-head p {
   color: var(--muted);
   margin: 0;
-  font-size: 1.02rem;
+  font-size: 1.03rem;
+  line-height: 1.8;
+  max-width: 62ch;
 }
 .section-index {
   font-family: var(--font-en);
@@ -317,13 +367,26 @@ nav a.active {
   border-radius: 999px;
   font-size: 0.96rem;
   font-weight: 700;
+  letter-spacing: 0.01em;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: transform 0.22s ease, box-shadow 0.25s ease, background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+  transition: transform 0.35s var(--ease-out), box-shadow 0.35s ease, background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
   position: relative;
   overflow: hidden;
   white-space: nowrap;
 }
+.btn::after {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0;
+  left: -70%;
+  width: 45%;
+  background: linear-gradient(105deg, transparent, rgba(255,255,255,0.35), transparent);
+  transform: skewX(-18deg);
+  transition: left 0.65s ease;
+  pointer-events: none;
+}
+.btn:hover::after { left: 135%; }
 .btn:active {
   transform: translateY(1px) scale(0.985);
 }
@@ -370,7 +433,8 @@ nav a.active {
 .hero h1 {
   font-size: clamp(2.4rem, 6.6vw, 4.4rem);
   font-weight: 800;
-  line-height: 1.22;
+  line-height: 1.18;
+  letter-spacing: -0.025em;
   background: linear-gradient(100deg, #ffffff 10%, var(--cyan-soft) 52%, var(--purple-soft) 92%);
   -webkit-background-clip: text;
   background-clip: text;
@@ -378,6 +442,7 @@ nav a.active {
   color: transparent;
   text-shadow: 0 0 70px rgba(34, 211, 238, 0.22);
   margin-bottom: 16px;
+  text-wrap: balance;
 }
 .hero h1 .thai-big {
   display: block;
@@ -521,7 +586,9 @@ nav a.active {
   font-size: 0.88rem;
   color: var(--muted);
   white-space: nowrap;
+  will-change: transform;
 }
+.marquee-band:hover .marquee { animation-play-state: paused; }
 .marquee span b {
   color: var(--cyan-soft);
   font-weight: 700;
@@ -548,11 +615,12 @@ nav a.active {
   background: rgba(130, 165, 255, 0.06);
   border: 1px solid var(--line);
   color: var(--muted);
-  transition: all 0.25s ease;
+  transition: all 0.3s var(--ease-out);
 }
 .filter-btn:hover {
   color: var(--text);
   border-color: var(--cyan);
+  transform: translateY(-1px);
 }
 .filter-btn.active {
   color: #04060f;
@@ -562,21 +630,40 @@ nav a.active {
 }
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 22px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  perspective: 1400px;
+  perspective-origin: center top;
+}
+@media (max-width: 1020px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .grid { grid-template-columns: 1fr; }
 }
 .card {
+  --rx: 0deg;
+  --ry: 0deg;
+  --glare-x: 50%;
+  --glare-y: 0%;
+  --glare-o: 0;
   position: relative;
-  background: linear-gradient(165deg, rgba(22, 28, 58, 0.78), rgba(9, 12, 26, 0.82));
+  background:
+    var(--glass-hi),
+    linear-gradient(165deg, rgba(24, 31, 64, 0.82), rgba(9, 12, 26, 0.86));
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 28px 24px 24px;
   cursor: pointer;
   overflow: hidden;
-  transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.3s ease, box-shadow 0.3s ease;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  transition: transform 0.5s var(--ease-out), border-color 0.35s ease, box-shadow 0.45s ease;
+  backdrop-filter: blur(18px) saturate(1.25);
+  -webkit-backdrop-filter: blur(18px) saturate(1.25);
   isolation: isolate;
+  transform: perspective(1100px) rotateX(var(--rx)) rotateY(var(--ry)) translateY(var(--lift, 0));
+  transform-style: preserve-3d;
+  box-shadow: var(--shadow-card);
+  will-change: transform;
 }
 /* เส้นไล่สีด้านบนของการ์ด */
 .card::after {
@@ -607,29 +694,41 @@ nav a.active {
 .card:focus-visible .sweep {
   left: 130%;
 }
-/* แสงตามเมาส์ */
+/* แสงตามเมาส์ + glare 3 มิติ */
 .card::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(360px 210px at var(--mx, 50%) var(--my, 0%), var(--card-color, var(--cyan)), transparent 62%);
+  background: radial-gradient(420px 240px at var(--mx, 50%) var(--my, 0%), var(--card-color, var(--cyan)), transparent 62%);
   opacity: 0;
-  transition: opacity 0.35s ease;
+  transition: opacity 0.4s ease;
   pointer-events: none;
   mix-blend-mode: screen;
   z-index: 0;
 }
+.card .glare {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  opacity: var(--glare-o, 0);
+  background: radial-gradient(520px 320px at var(--glare-x) var(--glare-y), rgba(255,255,255,0.16), transparent 60%);
+  mix-blend-mode: overlay;
+  transition: opacity 0.4s ease;
+}
 .card:hover,
 .card:focus-visible {
-  transform: translateY(-10px);
-  border-color: var(--card-color, var(--cyan));
-  box-shadow: 0 26px 54px rgba(0, 0, 0, 0.6), 0 0 36px rgba(34, 211, 238, 0.14);
+  --lift: -10px;
+  border-color: color-mix(in srgb, var(--card-color, var(--cyan)) 65%, white 10%);
+  box-shadow: var(--shadow-card-hover);
   outline: none;
 }
 .card:hover::before,
 .card:focus-visible::before {
-  opacity: 0.22;
+  opacity: 0.24;
 }
+.card:hover .glare,
+.card:focus-visible .glare { --glare-o: 1; }
 .card > * {
   position: relative;
   z-index: 2;
@@ -637,44 +736,54 @@ nav a.active {
 .card-icon {
   font-size: 2.1rem;
   line-height: 1;
-  width: 62px;
-  height: 62px;
+  width: 64px;
+  height: 64px;
   display: grid;
   place-items: center;
-  border-radius: 17px;
+  border-radius: 18px;
   margin-bottom: 18px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--line);
-  box-shadow: inset 0 0 24px rgba(255, 255, 255, 0.04), 0 0 26px rgba(34, 211, 238, 0.12);
-  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.02)),
+    rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), inset 0 0 24px rgba(255, 255, 255, 0.04), 0 10px 28px rgba(0,0,0,0.45), 0 0 26px color-mix(in srgb, var(--card-color, var(--cyan)) 35%, transparent);
+  transition: transform 0.5s var(--ease-spring);
+  transform: translateZ(38px);
 }
 .card:hover .card-icon,
 .card:focus-visible .card-icon {
-  transform: translateY(-4px) scale(1.1) rotate(-6deg);
+  transform: translateZ(48px) translateY(-4px) scale(1.08) rotate(-6deg);
 }
 .card-en {
   font-family: var(--font-en);
   font-size: 0.72rem;
-  letter-spacing: 0.22em;
+  font-weight: 600;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
   color: var(--card-color, var(--cyan));
   opacity: 0.95;
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  transform: translateZ(24px);
 }
 .card h3 {
-  font-size: 1.32rem;
+  font-size: 1.38rem;
   font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
   margin: 0 0 8px;
+  transform: translateZ(22px);
 }
 .card p.desc {
   color: var(--muted);
-  font-size: 0.93rem;
+  font-size: 0.94rem;
+  line-height: 1.75;
   margin: 0 0 16px;
   display: -webkit-box;
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  transform: translateZ(12px);
 }
 .meta-row {
   display: flex;
@@ -1219,12 +1328,15 @@ footer {
 /* ---------------- เอฟเฟกต์ปรากฏ ---------------- */
 .reveal {
   opacity: 0;
-  transform: translateY(26px);
-  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform: translateY(28px) scale(0.985);
+  filter: blur(6px);
+  transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out), filter 0.8s var(--ease-out);
+  will-change: opacity, transform, filter;
 }
 .reveal.visible {
   opacity: 1;
   transform: none;
+  filter: blur(0);
 }
 .reveal.d1 { transition-delay: 0.08s; }
 .reveal.d2 { transition-delay: 0.16s; }
@@ -1305,6 +1417,7 @@ footer {
 </style>
 </head>
 <body>
+<a class="skip-link" href="#applications">ข้ามไปยังเนื้อหาหลัก</a>
 <div class="top-glow-line" aria-hidden="true"></div>
 <!-- ===== พื้นหลัง 3 มิติทั้งหน้า ===== -->
 <div id="bg3d" aria-hidden="true"></div>
@@ -1804,41 +1917,114 @@ footer {
     accentListeners.forEach(function (fn) { try { fn(color); } catch (e) {} });
     if (!silent) toast("เปลี่ยนสีแสงแล้ว ✨");
   }
-  /* ---------------- ผูกการ์ดทั้ง 6 ---------------- */
+  /* ---------------- ผูกการ์ดทั้ง 6 · tilt 3 มิติ + glare ---------------- */
   var cards = $$(".card");
+  var tiltFine = window.matchMedia("(pointer: fine)").matches;
+  var reduceMo = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   cards.forEach(function (el) {
     var i = parseInt(el.dataset.index || "0", 10);
     var s = SECTORS[i];
     if (!s) return;
+    if (!el.querySelector(".glare")) {
+      var g = document.createElement("span");
+      g.className = "glare";
+      g.setAttribute("aria-hidden", "true");
+      el.appendChild(g);
+    }
+    var raf = 0, tx = 0, ty = 0, cx = 0, cy = 0;
+    function applyTilt() {
+      cx += (tx - cx) * 0.16;
+      cy += (ty - cy) * 0.16;
+      el.style.setProperty("--ry", cx.toFixed(2) + "deg");
+      el.style.setProperty("--rx", cy.toFixed(2) + "deg");
+      if (Math.abs(tx - cx) > 0.02 || Math.abs(ty - cy) > 0.02) {
+        raf = requestAnimationFrame(applyTilt);
+      } else { raf = 0; }
+    }
     el.addEventListener("pointermove", function (e) {
       var r = el.getBoundingClientRect();
-      el.style.setProperty("--mx", ((e.clientX - r.left) / r.width) * 100 + "%");
-      el.style.setProperty("--my", ((e.clientY - r.top) / r.height) * 100 + "%");
+      var px = (e.clientX - r.left) / r.width;
+      var py = (e.clientY - r.top) / r.height;
+      el.style.setProperty("--mx", px * 100 + "%");
+      el.style.setProperty("--my", py * 100 + "%");
+      el.style.setProperty("--glare-x", px * 100 + "%");
+      el.style.setProperty("--glare-y", py * 100 + "%");
+      if (!tiltFine || reduceMo) return;
+      tx = (px - 0.5) * 14;
+      ty = (0.5 - py) * 12;
+      if (!raf) raf = requestAnimationFrame(applyTilt);
     });
     el.addEventListener("pointerenter", function () { setAccent(s.color, true); });
+    el.addEventListener("pointerleave", function () {
+      tx = 0; ty = 0;
+      if (!raf) raf = requestAnimationFrame(applyTilt);
+    });
+    el.addEventListener("blur", function () {
+      el.style.setProperty("--rx", "0deg");
+      el.style.setProperty("--ry", "0deg");
+    });
     el.addEventListener("click", function () { openModal(i); });
     el.addEventListener("keydown", function (e) {
       if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openModal(i); }
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        var nxt = cards[(cards.indexOf(el) + 1) % cards.length];
+        if (nxt) nxt.focus();
+      }
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        var prv = cards[(cards.indexOf(el) + cards.length - 1) % cards.length];
+        if (prv) prv.focus();
+      }
     });
   });
-  /* ---------------- ตัวกรอง ---------------- */
+  /* ---------------- ตัวกรอง · แอนิเมชันนุ่ม ---------------- */
   $$(".filter-btn").forEach(function (btn) {
     btn.addEventListener("click", function () {
-      $$(".filter-btn").forEach(function (b) { b.classList.remove("active"); });
+      $$(".filter-btn").forEach(function (b) {
+        b.classList.remove("active");
+        b.setAttribute("aria-pressed", "false");
+      });
       btn.classList.add("active");
+      btn.setAttribute("aria-pressed", "true");
       var f = btn.dataset.filter;
       var visible = 0;
-      cards.forEach(function (c) {
+      cards.forEach(function (c, idx) {
         var show = (f === "all") || (c.dataset.group === f);
-        c.style.display = show ? "" : "none";
-        if (show) visible++;
+        if (show) {
+          visible++;
+          c.style.display = "";
+          c.style.opacity = "0";
+          c.style.transform = "";
+          requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+              c.style.transition = "opacity .45s cubic-bezier(.16,1,.3,1), transform .55s cubic-bezier(.16,1,.3,1)";
+              c.style.opacity = "1";
+            });
+          });
+          setTimeout(function () { c.style.opacity = ""; c.style.transition = ""; }, 600 + idx * 40);
+        } else {
+          c.style.display = "none";
+        }
       });
       var label = btn.textContent.trim();
       toast("แสดง " + visible + " ด้าน · " + label);
     });
   });
-  /* ---------------- หน้าต่างรายละเอียด ---------------- */
+  /* ---------------- หน้าต่างรายละเอียด · โฟกัสทแรป ---------------- */
   var backdrop = $("#modalBackdrop"), modal = $("#modal"), lastFocus = null, currentIndex = 0;
+  function focusables() {
+    return $$("button, [href], [tabindex]:not([tabindex='-1'])", modal)
+      .filter(function (el) { return !el.disabled && el.offsetParent !== null; });
+  }
+  function trapTab(e) {
+    if (e.key !== "Tab") return;
+    var f = focusables();
+    if (!f.length) return;
+    var first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
   function renderModal(i) {
     var s = SECTORS[i];
     currentIndex = i;
@@ -1857,13 +2043,15 @@ footer {
     renderModal(i);
     backdrop.classList.add("open");
     document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", trapTab);
     $("#modalClose").focus();
     toast(SECTORS[i].title + " · ด้านที่ " + (i + 1) + "/6");
   }
   function closeModal() {
     backdrop.classList.remove("open");
     document.body.style.overflow = "";
-    if (lastFocus) lastFocus.focus();
+    document.removeEventListener("keydown", trapTab);
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
   }
   $("#modalClose").addEventListener("click", closeModal);
   $("#mCloseBtn").addEventListener("click", closeModal);
@@ -1887,7 +2075,20 @@ footer {
     navToggle.textContent = open ? "✕" : "☰";
   });
   $$(".nav-link, .foot-links a[href^='#']").forEach(function (a) {
-    a.addEventListener("click", function () {
+    a.addEventListener("click", function (e) {
+      var id = a.getAttribute("href");
+      if (id && id.length > 1) {
+        var target = document.querySelector(id);
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+          target.setAttribute("tabindex", "-1");
+          setTimeout(function () {
+            try { target.focus({ preventScroll: true }); } catch (err) {}
+          }, 500);
+          history.replaceState(null, "", id);
+        }
+      }
       mainNav.classList.remove("open");
       navToggle.setAttribute("aria-expanded", "false");
       navToggle.textContent = "☰";
@@ -2025,15 +2226,20 @@ footer {
   function init(THREE, OrbitControls) {
     const api = window.AIDaily || { onAccent: () => {}, getAccent: () => "#22d3ee" };
     let accent = api.getAccent();
-    /* ---------- ตัวเรนเดอร์ ฉาก กล้อง ---------- */
+    /* ---------- renderer / scene / camera ---------- */
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0x000000, 0);
+    if ("outputColorSpace" in renderer && THREE.SRGBColorSpace) renderer.outputColorSpace = THREE.SRGBColorSpace;
+    if ("toneMapping" in renderer && THREE.ACESFilmicToneMapping) {
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.12;
+    }
     host.appendChild(renderer.domElement);
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x05060f, 0.012);
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 220);
+    scene.fog = new THREE.FogExp2(0x05060f, 0.008);
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 240);
     camera.position.set(0, 0.7, 7.6);
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -2043,13 +2249,28 @@ footer {
     controls.minDistance = 4.4;
     controls.maxDistance = 12;
     controls.autoRotate = !reduceMotion;
-    controls.autoRotateSpeed = 0.55;
+    controls.autoRotateSpeed = 0.5;
     controls.rotateSpeed = 0.55;
     const finePointer = window.matchMedia("(pointer: fine)").matches;
     host.classList.toggle("interactive", finePointer);
-    /* ---------- กลุ่มลูกโลก ---------- */
+    /* ---------- realistic lighting: sun + fill + rim ---------- */
+    const sun = new THREE.DirectionalLight(0xfff4e0, 2.6);
+    sun.position.set(6, 2.4, 4.5);
+    scene.add(sun);
+    scene.add(new THREE.AmbientLight(0x8ea2ff, 0.42));
+    const hemi = new THREE.HemisphereLight(0x9db8ff, 0x1a0b2e, 0.55);
+    scene.add(hemi);
+    const rimCyan = new THREE.DirectionalLight(new THREE.Color(accent), 1.1);
+    rimCyan.position.set(-6, 1.2, -4);
+    scene.add(rimCyan);
+    const rimPurple = new THREE.PointLight(0xa855f7, 18, 40, 1.8);
+    rimPurple.position.set(-3.5, -2.5, 3.5);
+    scene.add(rimPurple);
+    /* ---------- globe group ---------- */
     const globe = new THREE.Group();
     scene.add(globe);
+    const earthSpin = new THREE.Group();
+    globe.add(earthSpin);
     const isNarrow = () => window.innerWidth < 761;
     const placeGlobe = () => {
       globe.position.x = isNarrow() ? 0 : 2.2;
@@ -2057,30 +2278,115 @@ footer {
     };
     placeGlobe();
     const R = 1.75;
-    // 1. โครงลวดหลัก
-    const wireMat = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(accent), wireframe: true, transparent: true, opacity: 0.34
+    /* ---------- textures (Blue Marble + bump + night + water + clouds) ---------- */
+    const loader = new THREE.TextureLoader();
+    if ("setCrossOrigin" in loader) loader.setCrossOrigin("anonymous");
+    const TEX = {
+      day: [
+        "https://cdn.jsdelivr.net/npm/three-globe@2.31.0/example/img/earth-blue-marble.jpg",
+        "https://unpkg.com/three-globe@2.31.0/example/img/earth-blue-marble.jpg"
+      ],
+      bump: [
+        "https://cdn.jsdelivr.net/npm/three-globe@2.31.0/example/img/earth-topology.png",
+        "https://unpkg.com/three-globe@2.31.0/example/img/earth-topology.png"
+      ],
+      night: [
+        "https://cdn.jsdelivr.net/npm/three-globe@2.31.0/example/img/earth-night.jpg",
+        "https://unpkg.com/three-globe@2.31.0/example/img/earth-night.jpg"
+      ],
+      water: [
+        "https://cdn.jsdelivr.net/npm/three-globe@2.31.0/example/img/earth-water.png",
+        "https://unpkg.com/three-globe@2.31.0/example/img/earth-water.png"
+      ],
+      clouds: [
+        "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r169/examples/textures/planets/earth_clouds_1024.png",
+        "https://unpkg.com/three@0.169.0/examples/textures/planets/earth_clouds_1024.png"
+      ]
+    };
+    function loadFirst(urls, srgb) {
+      return new Promise((resolve) => {
+        let k = 0;
+        const next = () => {
+          if (k >= urls.length) return resolve(null);
+          loader.load(urls[k++], (t) => {
+            if (srgb && THREE.SRGBColorSpace) t.colorSpace = THREE.SRGBColorSpace;
+            t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+            resolve(t);
+          }, undefined, next);
+        };
+        next();
+      });
+    }
+    /* ---------- earth (fallback first, upgrade when textures arrive) ---------- */
+    const earthMat = new THREE.MeshPhongMaterial({
+      color: 0x0e2a52, shininess: 14, specular: new THREE.Color(0x2a4a6b)
     });
-    const wire = new THREE.Mesh(new THREE.SphereGeometry(R, 42, 28), wireMat);
-    globe.add(wire);
-    // 2. โครงลวดชั้นที่สองสีม่วง
-    const wire2Mat = new THREE.MeshBasicMaterial({
-      color: new THREE.Color("#a855f7"), wireframe: true, transparent: true, opacity: 0.12
-    });
-    const wire2 = new THREE.Mesh(new THREE.SphereGeometry(R * 1.04, 24, 16), wire2Mat);
-    globe.add(wire2);
-    // 3. แกนกลางทึบ
-    const core = new THREE.Mesh(
-      new THREE.SphereGeometry(R * 0.985, 48, 32),
-      new THREE.MeshBasicMaterial({ color: 0x060a18, transparent: true, opacity: 0.92 })
+    const earth = new THREE.Mesh(new THREE.SphereGeometry(R, 96, 64), earthMat);
+    earthSpin.add(earth);
+    // subtle graticule for premium tech feel
+    const grat = new THREE.Mesh(
+      new THREE.SphereGeometry(R * 1.002, 36, 24),
+      new THREE.MeshBasicMaterial({ color: new THREE.Color(accent), wireframe: true, transparent: true, opacity: 0.05, depthWrite: false })
     );
-    globe.add(core);
-    // 4. แสงบรรยากาศ
-    const glowUniforms = { glowColor: { value: new THREE.Color(accent) } };
-    const glow = new THREE.Mesh(
-      new THREE.SphereGeometry(R * 1.30, 48, 32),
+    earthSpin.add(grat);
+    let clouds = null;
+    let nightLayer = null;
+    Promise.all([
+      loadFirst(TEX.day, true), loadFirst(TEX.bump, false),
+      loadFirst(TEX.night, true), loadFirst(TEX.water, false),
+      loadFirst(TEX.clouds, true)
+    ]).then(([day, bump, night, water, cloudTex]) => {
+      if (day) { earthMat.map = day; earthMat.color.set(0xffffff); }
+      if (bump) { earthMat.bumpMap = bump; earthMat.bumpScale = 0.045; }
+      if (water) { earthMat.specularMap = water; earthMat.specular = new THREE.Color(0x4a6a8a); earthMat.shininess = 22; }
+      else { earthMat.shininess = 18; }
+      if (night) {
+        nightLayer = new THREE.Mesh(
+          new THREE.SphereGeometry(R * 1.004, 96, 64),
+          new THREE.MeshBasicMaterial({ map: night, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false })
+        );
+        earthSpin.add(nightLayer);
+      }
+      earthMat.needsUpdate = true;
+      if (cloudTex) {
+        clouds = new THREE.Mesh(
+          new THREE.SphereGeometry(R * 1.018, 64, 48),
+          new THREE.MeshLambertMaterial({ map: cloudTex, transparent: true, opacity: 0.42, depthWrite: false })
+        );
+        earthSpin.add(clouds);
+      }
+    });
+    /* ---------- atmosphere: inner fresnel + outer halo ---------- */
+    const atmoUniforms = { glowColor: { value: new THREE.Color(accent) }, intensity: { value: 1.0 } };
+    const atmosphere = new THREE.Mesh(
+      new THREE.SphereGeometry(R * 1.06, 64, 48),
       new THREE.ShaderMaterial({
-        uniforms: glowUniforms,
+        uniforms: atmoUniforms,
+        vertexShader: `
+          varying vec3 vNormal; varying vec3 vView;
+          void main() {
+            vNormal = normalize(normalMatrix * normal);
+            vec4 mv = modelViewMatrix * vec4(position, 1.0);
+            vView = normalize(-mv.xyz);
+            gl_Position = projectionMatrix * mv;
+          }`,
+        fragmentShader: `
+          uniform vec3 glowColor; uniform float intensity;
+          varying vec3 vNormal; varying vec3 vView;
+          void main() {
+            float rim = pow(1.0 - abs(dot(normalize(vNormal), normalize(vView))), 2.6);
+            vec3 col = glowColor * rim * intensity + vec3(0.25, 0.45, 1.0) * rim * 0.35;
+            gl_FragColor = vec4(col, rim * 0.9);
+          }`,
+        blending: THREE.AdditiveBlending, side: THREE.FrontSide, transparent: true, depthWrite: false
+      })
+    );
+    globe.add(atmosphere);
+    const haloUniforms = { glowColor: { value: new THREE.Color(accent) } };
+    const halo = new THREE.Mesh(
+      new THREE.SphereGeometry(R * 1.32, 48, 32),
+      new THREE.ShaderMaterial({
+        uniforms: haloUniforms,
         vertexShader: `
           varying vec3 vNormal;
           void main() {
@@ -2088,46 +2394,42 @@ footer {
             gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
           }`,
         fragmentShader: `
-          uniform vec3 glowColor;
-          varying vec3 vNormal;
+          uniform vec3 glowColor; varying vec3 vNormal;
           void main() {
-            float i = pow(0.62 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.4);
-            gl_FragColor = vec4(glowColor, 1.0) * clamp(i, 0.0, 1.0);
+            float i = pow(max(0.0, 0.68 - dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.2);
+            gl_FragColor = vec4(glowColor * i + vec3(0.15,0.3,0.9) * i * 0.4, i);
           }`,
-        blending: THREE.AdditiveBlending,
-        side: THREE.BackSide,
-        transparent: true,
-        depthWrite: false
+        blending: THREE.AdditiveBlending, side: THREE.BackSide, transparent: true, depthWrite: false
       })
     );
-    globe.add(glow);
-    // 5. จุดแสงเมืองบนผิวโลก
-    const CITY_COUNT = 750;
+    globe.add(halo);
+    /* ---------- golden city sparkles (sparse, warm) ---------- */
+    const CITY_COUNT = 260;
     const cityPos = new Float32Array(CITY_COUNT * 3);
     const golden = Math.PI * (3 - Math.sqrt(5));
     for (let i = 0; i < CITY_COUNT; i++) {
       const y = 1 - (i / (CITY_COUNT - 1)) * 2;
       const r = Math.sqrt(Math.max(0, 1 - y * y));
       const theta = golden * i;
-      cityPos[i * 3] = Math.cos(theta) * r * R * 1.006;
-      cityPos[i * 3 + 1] = y * R * 1.006;
-      cityPos[i * 3 + 2] = Math.sin(theta) * r * R * 1.006;
+      cityPos[i * 3] = Math.cos(theta) * r * R * 1.008;
+      cityPos[i * 3 + 1] = y * R * 1.008;
+      cityPos[i * 3 + 2] = Math.sin(theta) * r * R * 1.008;
     }
     const cityGeo = new THREE.BufferGeometry();
     cityGeo.setAttribute("position", new THREE.BufferAttribute(cityPos, 3));
     const cityMat = new THREE.PointsMaterial({
-      color: new THREE.Color(accent), size: 0.035, transparent: true, opacity: 0.9,
+      color: new THREE.Color("#ffd98a"), size: 0.028, transparent: true, opacity: 0.85,
       blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true
     });
     const cities = new THREE.Points(cityGeo, cityMat);
-    globe.add(cities);
-    // 6. เส้นเชื่อมพร้อมแสงวิ่ง
+    earthSpin.add(cities);
+    /* ---------- arcs + travelling pulses ---------- */
     const arcMat = new THREE.LineBasicMaterial({
-      color: new THREE.Color(accent), transparent: true, opacity: 0.55,
+      color: new THREE.Color(accent), transparent: true, opacity: 0.5,
       blending: THREE.AdditiveBlending, depthWrite: false
     });
     const pulseMat = new THREE.PointsMaterial({
-      color: 0xffffff, size: 0.09, transparent: true, opacity: 0.95,
+      color: 0xffffff, size: 0.085, transparent: true, opacity: 0.95,
       blending: THREE.AdditiveBlending, depthWrite: false
     });
     const arcs = [];
@@ -2148,92 +2450,128 @@ footer {
       const pts = curve.getPoints(50);
       const geo = new THREE.BufferGeometry().setFromPoints(pts);
       const line = new THREE.Line(geo, arcMat);
-      globe.add(line);
+      earthSpin.add(line);
       const pulseGeo = new THREE.BufferGeometry();
       const pulseAttr = new THREE.BufferAttribute(new Float32Array(3), 3);
       pulseGeo.setAttribute("position", pulseAttr);
       const pulse = new THREE.Points(pulseGeo, pulseMat);
       pulse.frustumCulled = false;
-      globe.add(pulse);
+      earthSpin.add(pulse);
       arcs.push({ curve, pulse, pulseAttr, t: Math.random(), speed: 0.10 + Math.random() * 0.16 });
     }
-    // 7. เปลือกอนุภาคบรรยากาศ
-    const P_COUNT = 1500;
-    const pPos = new Float32Array(P_COUNT * 3);
-    for (let i = 0; i < P_COUNT; i++) {
-      const v = randomOnSphere(2.1 + Math.random() * 2.7);
-      pPos[i * 3] = v.x; pPos[i * 3 + 1] = v.y; pPos[i * 3 + 2] = v.z;
+    /* ---------- atmospheric dust: colour-varied, layered shells ---------- */
+    function makeDust(count, rMin, rMax, size, opacity) {
+      const pos = new Float32Array(count * 3);
+      const col = new Float32Array(count * 3);
+      const palette = [new THREE.Color(accent), new THREE.Color("#a855f7"), new THREE.Color("#e2e8f0"), new THREE.Color("#67e8f9"), new THREE.Color("#fbbf24")];
+      for (let i = 0; i < count; i++) {
+        const v = randomOnSphere(rMin + Math.random() * (rMax - rMin));
+        pos[i * 3] = v.x; pos[i * 3 + 1] = v.y; pos[i * 3 + 2] = v.z;
+        const c = palette[(Math.random() * palette.length) | 0];
+        const dim = 0.45 + Math.random() * 0.55;
+        col[i * 3] = c.r * dim; col[i * 3 + 1] = c.g * dim; col[i * 3 + 2] = c.b * dim;
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+      g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+      const m = new THREE.PointsMaterial({
+        size, vertexColors: true, transparent: true, opacity,
+        blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true
+      });
+      return new THREE.Points(g, m);
     }
-    const pGeo = new THREE.BufferGeometry();
-    pGeo.setAttribute("position", new THREE.BufferAttribute(pPos, 3));
-    const particleMat = new THREE.PointsMaterial({
-      color: new THREE.Color(accent), size: 0.045, transparent: true, opacity: 0.55,
-      blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true
-    });
-    const particles = new THREE.Points(pGeo, particleMat);
-    globe.add(particles);
-    // 8. ดวงดาวพื้นหลังทั้งหน้า
-    const S_COUNT = 1000;
-    const sPos = new Float32Array(S_COUNT * 3);
-    const sCol = new Float32Array(S_COUNT * 3);
-    const cA = new THREE.Color("#67e8f9"), cB = new THREE.Color("#c084fc"), cW = new THREE.Color("#e2e8f0");
-    for (let i = 0; i < S_COUNT; i++) {
-      const v = randomOnSphere(26 + Math.random() * 40);
-      sPos[i * 3] = v.x; sPos[i * 3 + 1] = v.y; sPos[i * 3 + 2] = v.z;
-      const pick = Math.random();
-      const c = pick < 0.4 ? cA : pick < 0.7 ? cB : cW;
-      sCol[i * 3] = c.r; sCol[i * 3 + 1] = c.g; sCol[i * 3 + 2] = c.b;
+    const dustNear = makeDust(900, 2.15, 3.1, 0.045, 0.6);
+    const dustFar = makeDust(1100, 3.1, 5.2, 0.06, 0.42);
+    globe.add(dustNear); globe.add(dustFar);
+    /* ---------- starfield: two depths, cyan/violet/white/gold ---------- */
+    function makeStars(count, rMin, rMax, size, opacity) {
+      const pos = new Float32Array(count * 3);
+      const col = new Float32Array(count * 3);
+      const cA = new THREE.Color("#67e8f9"), cB = new THREE.Color("#c084fc"),
+            cW = new THREE.Color("#eef2ff"), cG = new THREE.Color("#fde68a");
+      for (let i = 0; i < count; i++) {
+        const v = randomOnSphere(rMin + Math.random() * (rMax - rMin));
+        pos[i * 3] = v.x; pos[i * 3 + 1] = v.y; pos[i * 3 + 2] = v.z;
+        const pick = Math.random();
+        const c = pick < 0.32 ? cA : pick < 0.58 ? cB : pick < 0.88 ? cW : cG;
+        const b = 0.5 + Math.random() * 0.5;
+        col[i * 3] = c.r * b; col[i * 3 + 1] = c.g * b; col[i * 3 + 2] = c.b * b;
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+      g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+      return new THREE.Points(g, new THREE.PointsMaterial({
+        size, vertexColors: true, transparent: true, opacity, depthWrite: false, sizeAttenuation: true
+      }));
     }
-    const sGeo = new THREE.BufferGeometry();
-    sGeo.setAttribute("position", new THREE.BufferAttribute(sPos, 3));
-    sGeo.setAttribute("color", new THREE.BufferAttribute(sCol, 3));
-    const stars = new THREE.Points(sGeo, new THREE.PointsMaterial({
-      size: 0.18, vertexColors: true, transparent: true, opacity: 0.75, depthWrite: false
-    }));
-    scene.add(stars);
-    // 9. ดาวเทียมบนวงโคจรเอียง
+    const stars1 = makeStars(900, 26, 55, 0.22, 0.85);
+    const stars2 = makeStars(700, 40, 80, 0.32, 0.5);
+    scene.add(stars1); scene.add(stars2);
+    /* ---------- satellites on tilted orbits ---------- */
     const sats = [];
     const orbitTilt = [
       { rx: 0.0, rz: 0.35, ry: 0.0 },
       { rx: 1.1, rz: -0.4, ry: 0.6 },
       { rx: -0.7, rz: 0.9, ry: -0.5 }
     ];
+    const satOrbitMats = [];
     orbitTilt.forEach((t, i) => {
       const ring = new THREE.Group();
       ring.rotation.set(t.rx, t.ry, t.rz);
-      const rad = 2.4 + i * 0.3;
-      const ringMesh = new THREE.Mesh(
-        new THREE.TorusGeometry(rad, 0.006, 8, 140),
-        new THREE.MeshBasicMaterial({
-          color: new THREE.Color(accent), transparent: true, opacity: 0.32,
-          blending: THREE.AdditiveBlending, depthWrite: false
-        })
-      );
+      const rad = 2.45 + i * 0.32;
+      const orbitMat = new THREE.MeshBasicMaterial({
+        color: new THREE.Color(accent), transparent: true, opacity: 0.3,
+        blending: THREE.AdditiveBlending, depthWrite: false
+      });
+      satOrbitMats.push(orbitMat);
+      const ringMesh = new THREE.Mesh(new THREE.TorusGeometry(rad, 0.006, 8, 160), orbitMat);
       ring.add(ringMesh);
       const sat = new THREE.Mesh(
-        new THREE.SphereGeometry(0.055, 12, 12),
+        new THREE.SphereGeometry(0.05, 12, 12),
         new THREE.MeshBasicMaterial({ color: 0xffffff })
       );
+      const satGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: makeGlowSprite(), color: new THREE.Color(accent),
+        transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false
+      }));
+      satGlow.scale.setScalar(0.42);
+      sat.add(satGlow);
       ring.add(sat);
       globe.add(ring);
-      sats.push({ ring, sat, rad, angle: i * 2.1, speed: 0.32 + i * 0.13 });
+      sats.push({ ring, sat, glow: satGlow, rad, angle: i * 2.1, speed: 0.32 + i * 0.13 });
     });
-    /* ---------- ซิงก์สีแสง ---------- */
-    const accentTargets = [wireMat, cityMat, arcMat, particleMat];
+    function makeGlowSprite() {
+      const c = document.createElement("canvas");
+      c.width = c.height = 64;
+      const ctx = c.getContext("2d");
+      const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+      grad.addColorStop(0, "rgba(255,255,255,1)");
+      grad.addColorStop(0.35, "rgba(255,255,255,0.5)");
+      grad.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 64, 64);
+      const tex = new THREE.CanvasTexture(c);
+      return tex;
+    }
+    /* ---------- accent sync ---------- */
+    const accentTargets = [grat.material, arcMat];
     api.onAccent && api.onAccent((color) => {
       accent = color;
       const c = new THREE.Color(color);
       accentTargets.forEach((m) => m.color.copy(c));
-      glowUniforms.glowColor.value.copy(c);
-      sats.forEach(({ ring }) => ring.children[0].material.color.copy(c));
+      atmoUniforms.glowColor.value.copy(c);
+      haloUniforms.glowColor.value.copy(c);
+      rimCyan.color.copy(c);
+      satOrbitMats.forEach((m) => m.color.copy(c));
+      sats.forEach((s) => s.glow.material.color.copy(c));
     });
-    /* ---------- หยุดหมุน ---------- */
+    /* ---------- pause ---------- */
     let spinPaused = reduceMotion;
     window.addEventListener("globe:spin", (e) => {
       spinPaused = !!e.detail.paused;
       controls.autoRotate = !spinPaused;
     });
-    /* ---------- ปรับขนาดตามหน้าจอ ---------- */
+    /* ---------- resize ---------- */
     function resize() {
       const w = window.innerWidth, h = window.innerHeight;
       camera.aspect = w / h;
@@ -2245,14 +2583,14 @@ footer {
     }
     window.addEventListener("resize", resize);
     resize();
-    /* ---------- พารัลแลกซ์เมาส์ ---------- */
+    /* ---------- pointer parallax ---------- */
     const pointer = { x: 0, y: 0 };
     const smooth = { x: 0, y: 0 };
     window.addEventListener("pointermove", (e) => {
       pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
       pointer.y = (e.clientY / window.innerHeight) * 2 - 1;
     }, { passive: true });
-    /* ---------- ลูปแอนิเมชัน ---------- */
+    /* ---------- animate ---------- */
     const clock = new THREE.Clock();
     function animate() {
       requestAnimationFrame(animate);
@@ -2261,27 +2599,31 @@ footer {
       smooth.x += (pointer.x - smooth.x) * 0.04;
       smooth.y += (pointer.y - smooth.y) * 0.04;
       if (!spinPaused) {
-        wire.rotation.y += dt * 0.12;
-        wire2.rotation.y -= dt * 0.05;
-        wire2.rotation.x += dt * 0.02;
-        core.rotation.y += dt * 0.12;
-        cities.rotation.y += dt * 0.12;
+        earthSpin.rotation.y += dt * 0.08;
+        if (clouds) clouds.rotation.y += dt * 0.028;
+        if (nightLayer) nightLayer.rotation.y += dt * 0.0;
         arcs.forEach((a) => {
           a.t = (a.t + dt * a.speed) % 1;
           const p = a.curve.getPointAt(a.t);
           a.pulseAttr.setXYZ(0, p.x, p.y, p.z);
           a.pulseAttr.needsUpdate = true;
         });
-        particles.rotation.y -= dt * 0.045;
-        particles.rotation.x = Math.sin(t * 0.12) * 0.06;
+        dustNear.rotation.y -= dt * 0.03;
+        dustFar.rotation.y += dt * 0.018;
+        dustNear.rotation.x = Math.sin(t * 0.1) * 0.05;
         sats.forEach((s) => {
           s.angle += dt * s.speed;
           s.sat.position.set(Math.cos(s.angle) * s.rad, Math.sin(s.angle) * s.rad, 0);
+          s.glow.material.opacity = 0.55 + Math.sin(t * 3 + s.angle * 4) * 0.25;
         });
-        stars.rotation.y += dt * 0.006;
-        glow.scale.setScalar(1 + Math.sin(t * 1.1) * 0.012);
+        stars1.rotation.y += dt * 0.006;
+        stars2.rotation.y -= dt * 0.003;
+        const tw = 0.75 + Math.sin(t * 1.7) * 0.1;
+        stars1.material.opacity = tw;
+        halo.scale.setScalar(1 + Math.sin(t * 1.1) * 0.012);
+        atmoUniforms.intensity.value = 1 + Math.sin(t * 1.3) * 0.08;
       }
-      globe.rotation.x = smooth.y * 0.12 + Math.sin(t * 0.3) * 0.03;
+      globe.rotation.x = smooth.y * 0.1 + Math.sin(t * 0.3) * 0.02;
       globe.rotation.z = -smooth.x * 0.05;
       camera.position.x = smooth.x * 0.35;
       camera.position.y = 0.7 - smooth.y * 0.25;
@@ -2290,7 +2632,7 @@ footer {
       renderer.render(scene, camera);
     }
     animate();
-    console.log("%c🌍 ปัญญาประดิษฐ์ในชีวิตประจำวัน · Three.js ready", "color:#22d3ee;font-weight:bold");
+    console.log("%c🌍 AI Daily Life · realistic Blue Marble ready", "color:#22d3ee;font-weight:bold");
   }
 </script>
 </body>
