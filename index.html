@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI in Daily Life — Interactive 3D Showcase</title>
+<meta name="description" content="An interactive 3D website exploring how Artificial Intelligence is used in everyday life: smart home, healthcare, education, transportation and finance." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>" />
+
+<style>
+  /* ============================================================
+     AI IN DAILY LIFE — single file, no build step
+     ============================================================ */
+  :root {
+    --bg: #05070f;
+    --bg-2: #090d1c;
+    --panel: rgba(14, 19, 38, 0.72);
+    --panel-solid: #0d1124;
+    --line: rgba(120, 160, 255, 0.16);
+    --text: #e8ecff;
+    --muted: #97a1c4;
+    --accent: #4ff2ff;
+    --accent-2: #7dff9b;
+    --radius: 18px;
+    --header-h: 68px;
+    --shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: radial-gradient(1200px 700px at 70% -10%, #10204a 0%, transparent 60%),
+                radial-gradient(900px 600px at 0% 100%, #1a0f3d 0%, transparent 55%),
+                var(--bg);
+    color: var(--text);
+    font-family: "Inter", "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection { background: var(--accent); color: #04060f; }
+
+  a { color: inherit; text-decoration: none; }
+  img { max-width: 100%; }
+
+  /* ---------------- 3D canvas ---------------- */
+  #scene {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;          /* touch devices: let the page scroll */
+    transition: opacity .4s ease;
+  }
+  #scene.interactive { pointer-events: auto; } /* desktop: drag to orbit */
+  #scene canvas { display: block; touch-action: auto; }
+
+  /* Content sits above the canvas; only real content blocks the pointer,
+     so empty gutters let you drag/rotate the globe underneath. */
+  main { pointer-events: none; }
+  main .eyebrow, main h1, main h2, main h3, main h4, main p, main .lead,
+  main .hero-actions, main .hero-meta, main .section-head, main .card,
+  main .stat, main .footnote, main .panel, main .m-actions {
+    pointer-events: auto;
+  }
+  /* fallback / when JS-3D fails */
+  #scene-fallback {
+    position: fixed;
+    top: 18vh;
+    right: -8vw;
+    width: 46vw;
+    max-width: 620px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    z-index: 0;
+    background:
+      radial-gradient(circle at 35% 30%, rgba(79,242,255,.30), transparent 60%),
+      repeating-radial-gradient(circle at 50% 50%, rgba(79,242,255,.16) 0 1px, transparent 1px 26px);
+    filter: blur(.3px);
+    animation: spin 40s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------------- layout helpers ---------------- */
+  .wrap { width: min(1180px, 92vw); margin: 0 auto; }
+  main { position: relative; z-index: 2; }
+  section { scroll-margin-top: calc(var(--header-h) + 12px); position: relative; }
+  footer { pointer-events: auto; }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .74rem;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(79, 242, 255, .08);
+    border: 1px solid rgba(79, 242, 255, .28);
+    padding: 6px 14px;
+    border-radius: 999px;
+    margin-bottom: 18px;
+  }
+  h1, h2, h3 { line-height: 1.15; margin: 0 0 .5em; letter-spacing: -.02em; }
+  h2 { font-size: clamp(1.7rem, 3.6vw, 2.6rem); }
+  .section-head { max-width: 640px; margin-bottom: 42px; }
+  .section-head p { color: var(--muted); margin: 0; font-size: 1.02rem; }
+
+  /* ---------------- header ---------------- */
+  header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: var(--header-h);
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    background: rgba(5, 7, 15, .62);
+    border-bottom: 1px solid var(--line);
+    transition: background .3s ease;
+  }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: min(1180px, 92vw); margin: 0 auto; }
+
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .02em; }
+  .logo .mark {
+    width: 30px; height: 30px; border-radius: 9px;
+    display: grid; place-items: center;
+    background: linear-gradient(140deg, var(--accent), #2b6bff);
+    color: #04060f; font-size: .95rem; font-weight: 800;
+    box-shadow: 0 0 18px rgba(79, 242, 255, .55);
+    transition: box-shadow .3s ease, background .4s ease;
+  }
+  .logo:hover .mark { box-shadow: 0 0 26px rgba(79, 242, 255, .85); }
+  .logo small { display: block; font-size: .62rem; color: var(--muted); letter-spacing: .18em; text-transform: uppercase; font-weight: 500; }
+
+  nav ul { display: flex; gap: 6px; list-style: none; margin: 0; padding: 0; }
+  nav a {
+    display: block; padding: 9px 15px; border-radius: 999px;
+    font-size: .92rem; color: var(--muted);
+    transition: color .25s ease, background .25s ease, box-shadow .25s ease;
+    position: relative;
+  }
+  nav a:hover { color: var(--text); background: rgba(120, 160, 255, .1); }
+  nav a.active {
+    color: var(--accent);
+    background: rgba(79, 242, 255, .1);
+    box-shadow: inset 0 0 0 1px rgba(79, 242, 255, .35);
+  }
+  .nav-toggle {
+    display: none; width: 42px; height: 38px; border-radius: 10px;
+    background: rgba(120,160,255,.1); border: 1px solid var(--line);
+    color: var(--text); cursor: pointer; font-size: 1.1rem;
+  }
+
+  /* ---------------- buttons ---------------- */
+  .btn {
+    --btn-glow: var(--accent);
+    display: inline-flex; align-items: center; gap: 9px;
+    padding: 13px 24px; border-radius: 999px;
+    font-size: .95rem; font-weight: 600; font-family: inherit;
+    cursor: pointer; border: 1px solid transparent;
+    transition: transform .2s ease, box-shadow .25s ease, background .25s ease, color .25s ease, border-color .25s ease;
+    position: relative; overflow: hidden;
+  }
+  .btn:active { transform: translateY(1px) scale(.985); }
+  .btn:focus-visible { outline: 2px solid var(--btn-glow); outline-offset: 3px; }
+  .btn-primary {
+    background: linear-gradient(120deg, var(--btn-glow), #2b6bff);
+    color: #04060f;
+    box-shadow: 0 8px 30px rgba(79, 242, 255, .32);
+  }
+  .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 14px 38px rgba(79, 242, 255, .5); }
+  .btn-ghost {
+    background: rgba(120, 160, 255, .07);
+    border-color: var(--line);
+    color: var(--text);
+  }
+  .btn-ghost:hover { transform: translateY(-3px); border-color: var(--btn-glow); box-shadow: 0 10px 28px rgba(0,0,0,.5); color: var(--btn-glow); }
+  .btn-ghost.on { border-color: var(--accent); color: var(--accent); background: rgba(79,242,255,.12); }
+
+  /* ---------------- hero ---------------- */
+  .hero {
+    min-height: 100svh;
+    display: flex; align-items: center;
+    padding: calc(var(--header-h) + 40px) 0 70px;
+  }
+  .hero-inner { max-width: 640px; }
+  .hero h1 {
+    font-size: clamp(2.5rem, 7vw, 4.6rem);
+    font-weight: 800;
+    background: linear-gradient(100deg, #ffffff 15%, var(--accent) 55%, #a58bff 95%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+    text-shadow: 0 0 60px rgba(79, 242, 255, .25);
+  }
+  .hero p.lead { font-size: clamp(1rem, 2.2vw, 1.18rem); color: var(--muted); margin: 0 0 30px; }
+  .hero-actions { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 34px; }
+
+  .hero-meta { display: flex; flex-wrap: wrap; gap: 10px; }
+  .chip {
+    font-size: .78rem; color: var(--muted);
+    border: 1px solid var(--line); border-radius: 999px;
+    padding: 6px 13px; background: rgba(9, 13, 28, .6);
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  .chip i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-2); box-shadow: 0 0 10px var(--accent-2); font-style: normal; animation: blink 2.2s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity: .3; } }
+
+  .scroll-hint {
+    position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%);
+    font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; color: var(--muted);
+    display: flex; flex-direction: column; align-items: center; gap: 8px; opacity: .8;
+  }
+  .scroll-hint span.line { width: 1px; height: 34px; background: linear-gradient(var(--accent), transparent); animation: drop 1.8s ease-in-out infinite; }
+  @keyframes drop { 0% { transform: scaleY(.2); transform-origin: top; } 50% { transform: scaleY(1); transform-origin: top; } 100% { transform: scaleY(.2); transform-origin: bottom; } }
+
+  /* ---------------- cards ---------------- */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 22px;
+  }
+  .card {
+    position: relative;
+    background: linear-gradient(160deg, rgba(20, 26, 52, .88), rgba(9, 12, 26, .88));
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 26px 24px 24px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform .3s cubic-bezier(.2,.8,.2,1), border-color .3s ease, box-shadow .3s ease;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .card::before {
+    content: "";
+    position: absolute; inset: -1px;
+    background: radial-gradient(340px 200px at var(--mx, 50%) var(--my, 0%), var(--card-color, var(--accent)), transparent 62%);
+    opacity: 0; transition: opacity .35s ease; pointer-events: none;
+    mix-blend-mode: screen;
+  }
+  .card::after {
+    content: "";
+    position: absolute; left: 0; right: 0; top: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--card-color, var(--accent)), transparent);
+    opacity: .5; transition: opacity .3s ease;
+  }
+  .card:hover, .card:focus-visible {
+    transform: translateY(-9px);
+    border-color: color-mix(in srgb, var(--card-color, var(--accent)) 60%, transparent);
+    box-shadow: 0 24px 50px rgba(0,0,0,.55), 0 0 34px color-mix(in srgb, var(--card-color, var(--accent)) 26%, transparent);
+    outline: none;
+  }
+  .card:hover::before, .card:focus-visible::before { opacity: .22; }
+  .card:hover .card-icon, .card:focus-visible .card-icon { transform: translateY(-4px) scale(1.12) rotate(-6deg); }
+  .card:hover .card-go { opacity: 1; transform: translateX(0); }
+
+  .card-icon {
+    font-size: 2.2rem; line-height: 1;
+    width: 60px; height: 60px; display: grid; place-items: center;
+    border-radius: 16px; margin-bottom: 18px;
+    background: color-mix(in srgb, var(--card-color, var(--accent)) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--card-color, var(--accent)) 42%, transparent);
+    box-shadow: 0 0 26px color-mix(in srgb, var(--card-color, var(--accent)) 24%, transparent);
+    transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s ease;
+  }
+  .card h3 { font-size: 1.16rem; margin-bottom: 8px; }
+  .card p { color: var(--muted); font-size: .93rem; margin: 0 0 18px; }
+  .card-tag {
+    font-size: .7rem; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--card-color, var(--accent)); opacity: .85;
+  }
+  .card-go {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: .85rem; font-weight: 600; color: var(--card-color, var(--accent));
+    opacity: .45; transform: translateX(-6px);
+    transition: opacity .3s ease, transform .3s ease;
+  }
+
+  /* ---------------- impact / stats ---------------- */
+  .stats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 18px; margin-top: 6px;
+  }
+  .stat {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 26px 22px;
+    text-align: center;
+    transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
+  }
+  .stat:hover { transform: translateY(-6px); border-color: rgba(79,242,255,.4); box-shadow: 0 16px 40px rgba(0,0,0,.5), 0 0 26px rgba(79,242,255,.16); }
+  .stat .num {
+    font-size: clamp(2rem, 4.6vw, 2.9rem); font-weight: 800;
+    background: linear-gradient(120deg, var(--accent), #a58bff);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+    display: block;
+  }
+  .stat .label { color: var(--muted); font-size: .88rem; }
+  .footnote { color: #6f78a0; font-size: .78rem; margin-top: 18px; }
+
+  /* ---------------- about ---------------- */
+  .about-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 34px; align-items: start; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 28px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .panel h3 { font-size: 1.1rem; display: flex; align-items: center; gap: 10px; }
+  .panel p { color: var(--muted); font-size: .95rem; }
+  .stack { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 14px; }
+  .stack span {
+    font-size: .76rem; padding: 6px 12px; border-radius: 8px;
+    background: rgba(120,160,255,.09); border: 1px solid var(--line); color: var(--text);
+  }
+  .checklist { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .checklist li { display: flex; gap: 11px; align-items: flex-start; color: var(--muted); font-size: .93rem; }
+  .checklist li b { color: var(--text); font-weight: 600; }
+  .checklist .tick {
+    flex: 0 0 auto; width: 20px; height: 20px; border-radius: 50%;
+    background: rgba(125,255,155,.14); border: 1px solid rgba(125,255,155,.45);
+    color: var(--accent-2); font-size: .7rem; display: grid; place-items: center; margin-top: 2px;
+  }
+
+  /* ---------------- footer ---------------- */
+  footer {
+    position: relative; z-index: 2;
+    margin-top: 90px;
+    border-top: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(9,13,28,.5), rgba(5,7,15,.95));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 54px 0 34px;
+  }
+  .foot-grid { display: flex; flex-wrap: wrap; gap: 30px; justify-content: space-between; align-items: flex-start; }
+  .foot-grid p { color: var(--muted); font-size: .9rem; max-width: 380px; margin: 8px 0 0; }
+  .foot-links { display: flex; flex-direction: column; gap: 10px; }
+  .foot-links a { color: var(--muted); font-size: .9rem; transition: color .2s ease, transform .2s ease; width: fit-content; }
+  .foot-links a:hover { color: var(--accent); transform: translateX(4px); }
+  .gh-btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 12px 20px; border-radius: 12px;
+    background: rgba(120,160,255,.08); border: 1px solid var(--line);
+    color: var(--text); font-weight: 600; font-size: .92rem;
+    transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+  }
+  .gh-btn:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 12px 30px rgba(0,0,0,.5), 0 0 24px rgba(79,242,255,.2); }
+  .gh-btn svg { width: 20px; height: 20px; fill: currentColor; }
+  .copyright { margin-top: 34px; padding-top: 20px; border-top: 1px solid var(--line); color: #6f78a0; font-size: .8rem; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+
+  /* ---------------- modal ---------------- */
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 90;
+    background: rgba(3, 5, 12, .78);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    display: grid; place-items: center; padding: 20px;
+    opacity: 0; visibility: hidden; transition: opacity .28s ease, visibility .28s;
+  }
+  .modal-backdrop.open { opacity: 1; visibility: visible; }
+  .modal {
+    width: min(620px, 100%);
+    max-height: 86vh; overflow-y: auto;
+    background: linear-gradient(165deg, #121733, #0a0d1e);
+    border: 1px solid var(--modal-color, var(--accent));
+    border-radius: 22px;
+    padding: 34px 32px 30px;
+    box-shadow: 0 30px 80px rgba(0,0,0,.7), 0 0 50px color-mix(in srgb, var(--modal-color, var(--accent)) 22%, transparent);
+    transform: translateY(26px) scale(.97); opacity: 0;
+    transition: transform .32s cubic-bezier(.2,.9,.25,1), opacity .32s ease;
+    position: relative;
+  }
+    .modal-backdrop.open .modal { transform: translateY(0) scale(1); opacity: 1; }
+  .modal .m-icon { font-size: 2.6rem; }
+  .modal h3 { font-size: 1.6rem; margin: 10px 0 6px; }
+  .modal .m-tag { font-size: .72rem; letter-spacing: .18em; text-transform: uppercase; color: var(--modal-color, var(--accent)); }
+  .modal p.m-desc { color: var(--muted); font-size: .97rem; }
+  .modal h4 { font-size: .8rem; letter-spacing: .16em; text-transform: uppercase; color: var(--text); margin: 24px 0 12px; }
+  .m-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .m-list li {
+    background: rgba(120,160,255,.06); border: 1px solid var(--line);
+    border-left: 3px solid var(--modal-color, var(--accent));
+    border-radius: 10px; padding: 11px 14px; font-size: .9rem; color: var(--muted);
+  }
+  .m-stat {
+    margin-top: 22px; padding: 16px 18px; border-radius: 14px;
+    background: color-mix(in srgb, var(--modal-color, var(--accent)) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--modal-color, var(--accent)) 38%, transparent);
+    font-size: .9rem; color: var(--text);
+  }
+  .m-stat b { color: var(--modal-color, var(--accent)); font-size: 1.15rem; }
+  .m-close {
+    position: absolute; top: 16px; right: 16px;
+    width: 38px; height: 38px; border-radius: 50%;
+    background: rgba(120,160,255,.1); border: 1px solid var(--line);
+    color: var(--text); font-size: 1.1rem; cursor: pointer;
+    transition: background .2s ease, transform .2s ease, border-color .2s ease;
+  }
+  .m-close:hover { background: rgba(255,90,120,.18); border-color: #ff5a7c; transform: rotate(90deg); }
+  .m-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+
+  /* ---------------- toast ---------------- */
+  #toast {
+    position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 24px);
+    z-index: 100; padding: 12px 20px; border-radius: 999px;
+    background: rgba(10, 14, 30, .95); border: 1px solid var(--accent);
+    color: var(--text); font-size: .88rem;
+    box-shadow: 0 0 30px rgba(79,242,255,.3);
+    opacity: 0; visibility: hidden; transition: all .3s ease;
+  }
+  #toast.show { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+
+  /* ---------------- back to top ---------------- */
+  #toTop {
+    position: fixed; right: 20px; bottom: 22px; z-index: 60;
+    width: 46px; height: 46px; border-radius: 50%;
+    background: rgba(10,14,30,.9); border: 1px solid var(--line);
+    color: var(--accent); font-size: 1.1rem; cursor: pointer;
+    opacity: 0; visibility: hidden; transform: translateY(14px);
+    transition: all .3s ease;
+    box-shadow: 0 0 22px rgba(79,242,255,.22);
+  }
+  #toTop.show { opacity: 1; visibility: visible; transform: translateY(0); }
+  #toTop:hover { border-color: var(--accent); box-shadow: 0 0 32px rgba(79,242,255,.5); }
+
+  /* ---------------- reveal ---------------- */
+  .reveal { opacity: 0; transform: translateY(26px); transition: opacity .7s ease, transform .7s cubic-bezier(.2,.8,.2,1); }
+  .reveal.visible { opacity: 1; transform: none; }
+  .reveal.d1 { transition-delay: .08s; } .reveal.d2 { transition-delay: .16s; }
+  .reveal.d3 { transition-delay: .24s; } .reveal.d4 { transition-delay: .32s; }
+
+  /* ---------------- responsive ---------------- */
+  @media (max-width: 900px) {
+    .about-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 760px) {
+    .nav-toggle { display: block; }
+    nav {
+      position: fixed; top: var(--header-h); left: 0; right: 0;
+      background: rgba(7, 10, 22, .97);
+      border-bottom: 1px solid var(--line);
+      transform: translateY(-140%); transition: transform .35s cubic-bezier(.2,.9,.25,1);
+      backdrop-filter: blur(14px);
+    }
+    nav.open { transform: translateY(0); }
+    nav ul { flex-direction: column; gap: 4px; padding: 14px 6vw 20px; }
+    nav a { padding: 13px 16px; font-size: 1rem; }
+    .hero { min-height: auto; padding-top: calc(var(--header-h) + 56px); padding-bottom: 120px; }
+    #scene { opacity: .55; }
+    #scene-fallback { top: auto; bottom: -10vh; right: -22vw; width: 90vw; opacity: .6; }
+    .modal { padding: 28px 22px 26px; }
+    .scroll-hint { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    html { scroll-behavior: auto; }
+    .reveal { opacity: 1; transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== 3D scene (fixed background) ===== -->
+<div id="scene" aria-hidden="true"></div>
+<div id="scene-fallback" aria-hidden="true"></div>
+
+<!-- ===== header ===== -->
+<header>
+  <div class="nav-inner">
+    <a class="logo" href="#home" aria-label="AI in Daily Life home">
+      <span class="mark">AI</span>
+      <span>Daily&nbsp;AI<small>three.js demo</small></span>
+    </a>
+
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">☰</button>
+
+    <nav id="mainNav" aria-label="Main navigation">
+      <ul>
+        <li><a href="#home" class="nav-link active">Home</a></li>
+        <li><a href="#applications" class="nav-link">Applications</a></li>
+        <li><a href="#impact" class="nav-link">Impact</a></li>
+        <li><a href="#about" class="nav-link">About</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- ===== hero ===== -->
+  <section id="home" class="hero">
+    <div class="wrap hero-inner">
+      <span class="eyebrow">● Interactive 3D · WebGL</span>
+      <h1>AI in Daily&nbsp;Life</h1>
+      <p class="lead">
+        Artificial Intelligence is no longer science fiction — it wakes you up, books your route,
+        flags fraud on your card and helps your doctor read an X‑ray. Explore the five places
+        you already meet AI every single day.
+      </p>
+
+      <div class="hero-actions">
+        <button class="btn btn-primary" id="btnExplore">Explore applications ↓</button>
+        <button class="btn btn-ghost" id="btnSpin" aria-pressed="false">⏸ Pause globe</button>
+        <button class="btn btn-ghost" id="btnAccent">🎨 Shuffle glow</button>
+      </div>
+
+      <div class="hero-meta">
+        <span class="chip"><i></i> Drag the empty space to rotate the globe</span>
+        <span class="chip"><i></i> Particle atmosphere + orbiting satellites</span>
+        <span class="chip"><i></i> Click a card for details</span>
+      </div>
+    </div>
+
+    <div class="scroll-hint" aria-hidden="true">
+      <span>scroll</span>
+      <span class="line"></span>
+    </div>
+  </section>
+
+  <!-- ===== applications ===== -->
+  <section id="applications" style="padding: 90px 0 20px;">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">Five everyday sectors</span>
+        <h2>Where AI shows up in your day</h2>
+        <p>Hover a card to recolour the globe, click it to open a deep dive with real-world examples.</p>
+      </div>
+
+      <div class="grid" id="cardGrid"><!-- cards injected by JS --></div>
+    </div>
+  </section>
+
+  <!-- ===== impact ===== -->
+  <section id="impact" style="padding: 90px 0 20px;">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">By the numbers</span>
+        <h2>The quiet impact</h2>
+        <p>A snapshot of how deeply AI has already blended into ordinary routines.</p>
+      </div>
+
+      <div class="stats">
+        <div class="stat reveal"><span class="num" data-to="72" data-suffix="%">0</span><span class="label">of households run at least one AI‑powered device</span></div>
+        <div class="stat reveal d1"><span class="num" data-to="40" data-suffix="%">0</span><span class="label">less energy used by AI climate control</span></div>
+        <div class="stat reveal d2"><span class="num" data-to="3.5" data-dec="1" data-suffix="h">0</span><span class="label">saved per week on repetitive tasks</span></div>
+        <div class="stat reveal d3"><span class="num" data-to="5" data-suffix="/5">0</span><span class="label">sectors above already run on AI</span></div>
+      </div>
+      <p class="footnote reveal">* Figures are illustrative estimates assembled for this demo, not sourced research.</p>
+    </div>
+  </section>
+
+  <!-- ===== about ===== -->
+  <section id="about" style="padding: 90px 0 40px;">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">About this site</span>
+        <h2>Built with Three.js, zero frameworks</h2>
+        <p>One HTML file, one CDN, no build step — deploy it anywhere that serves static files.</p>
+      </div>
+
+      <div class="about-grid">
+        <div class="panel reveal">
+          <h3>🧩 What's under the hood</h3>
+          <p>
+            The wireframe globe, orbiting satellites, connection arcs and particle atmosphere are
+            rendered with WebGL through Three.js. The UI layer is hand-written HTML, CSS and
+            vanilla JavaScript.
+          </p>
+          <div class="stack">
+            <span>Three.js r169</span><span>OrbitControls</span><span>WebGL</span>
+            <span>importmap CDN</span><span>Vanilla JS</span><span>CSS Grid</span>
+            <span>Responsive</span><span>No dependencies</span>
+          </div>
+        </div>
+
+        <div class="panel reveal d1">
+          <h3>✅ Every control works</h3>
+          <ul class="checklist">
+            <li><span class="tick">✓</span><span><b>Navigation</b> — smooth-scrolls and highlights the active section.</span></li>
+            <li><span class="tick">✓</span><span><b>Cards</b> — open an accessible modal (Esc / backdrop / ✕ close it).</span></li>
+            <li><span class="tick">✓</span><span><b>Globe controls</b> — pause the spin, drag, zoom, shuffle the glow colour.</span></li>
+            <li><span class="tick">✓</span><span><b>Counters</b> — animate when the Impact section scrolls into view.</span></li>
+            <li><span class="tick">✓</span><span><b>Mobile menu, back‑to‑top, toasts</b> — all wired up.</span></li>
+          </ul>
+          <div class="m-actions">
+            <button class="btn btn-primary" id="btnRandomCard">🎲 Open a random sector</button>
+            <button class="btn btn-ghost" id="btnBackTop2">Back to top ↑</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ===== footer ===== -->
+<footer id="contact">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <a class="logo" href="#home"><span class="mark">AI</span><span>Daily&nbsp;AI<small>three.js demo</small></span></a>
+        <p>A small, practical demonstration of AI applications in daily life — rendered in real time with Three.js and WebGL.</p>
+      </div>
+
+      <div class="foot-links">
+        <strong style="font-size:.8rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);">Sections</strong>
+        <a href="#home">Home</a>
+        <a href="#applications">Applications</a>
+        <a href="#impact">Impact</a>
+        <a href="#about">About</a>
+      </div>
+
+      <div class="foot-links">
+        <strong style="font-size:.8rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);">Resources</strong>
+        <a href="https://threejs.org/docs/" target="_blank" rel="noopener">Three.js docs</a>
+        <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API" target="_blank" rel="noopener">WebGL on MDN</a>
+        <!-- Replace the href below with your repository URL -->
+        <!-- href is overwritten from GITHUB_URL in the script below -->
+        <a href="https://github.com/" target="_blank" rel="noopener" class="gh-link" data-github>Source code</a>
+      </div>
+
+      <div>
+        <!-- Replace the href below with your repository URL -->
+        <a class="gh-btn" href="https://github.com/" target="_blank" rel="noopener" data-github aria-label="View this project on GitHub">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+          Star on GitHub
+        </a>
+      </div>
+    </div>
+
+    <div class="copyright">
+      <span>© <span id="year">2026</span> AI in Daily Life · Built with Three.js</span>
+      <span>WebGL · Vanilla JS · No frameworks</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ===== modal ===== -->
+<div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal" id="modal">
+    <button class="m-close" id="modalClose" aria-label="Close dialog">✕</button>
+    <div class="m-icon" id="mIcon">🏠</div>
+    <span class="m-tag" id="mTag">Sector</span>
+    <h3 id="modalTitle">Title</h3>
+    <p class="m-desc" id="mDesc"></p>
+    <h4>In your day</h4>
+    <ul class="m-list" id="mList"></ul>
+    <div class="m-stat" id="mStat"></div>
+    <div class="m-actions">
+      <button class="btn btn-primary" id="mNext">Next sector →</button>
+      <button class="btn btn-ghost" id="mCloseBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<button id="toTop" aria-label="Back to top">↑</button>
+
+<!-- ============================================================
+     UI LOGIC (classic script → runs even if the Three.js CDN fails)
+     ============================================================ -->
+<script>
+(function () {
+  "use strict";
+
+  /* ---------------- data ---------------- */
+  var GITHUB_URL = "https://github.com/"; // ← replace with your repo URL (drives every GitHub link)
+
+  // Single source of truth for the footer GitHub links
+  Array.prototype.forEach.call(document.querySelectorAll("[data-github]"), function (a) {
+    a.href = GITHUB_URL;
+  });
+
+  var SECTORS = [
+    {
+      id: "smart-home",
+      icon: "🏠", title: "Smart Home", color: "#4ff2ff",
+      tag: "Ambient intelligence",
+      short: "Thermostats, assistants and cameras that learn your routines and run the house for you.",
+      desc: "Your home already predicts you. Machine learning models study when you wake, how you like your light and temperature, and when the house is empty — then act without being asked.",
+      list: [
+        "Voice assistants transcribing speech with neural networks and answering in milliseconds.",
+        "Learning thermostats cutting heating bills by anticipating your schedule.",
+        "Robot vacuums mapping rooms with LiDAR and avoiding shoes and cables.",
+        "Cameras recognising a familiar face versus a stranger before alerting your phone."
+      ],
+      stat: "<b>~40%</b> energy saved by AI-tuned heating &amp; cooling vs. a fixed schedule."
+    },
+    {
+      id: "healthcare",
+      icon: "🩺", color: "#ff6b9d",
+      title: "Healthcare", tag: "Earlier, cheaper diagnosis",
+      short: "From imaging analysis to 24/7 symptom checkers — AI acts as a second pair of eyes.",
+      desc: "Deep learning models now read medical scans, predict deterioration hours ahead and draft clinical notes, giving clinicians more time with patients and catching what tired eyes miss.",
+      list: [
+        "Radiology AI highlighting tumours and fractures on X-rays, CT and MRI.",
+        "Wearable data flagging irregular heart rhythms like atrial fibrillation.",
+        "Triage chatbots ranking symptom severity before you see a doctor.",
+        "Drug-discovery models screening millions of molecules in days, not years."
+      ],
+      stat: "<b>2nd opinion</b> — AI reads alongside the radiologist, never instead of them."
+    },
+    {
+      id: "education",
+      icon: "📚", title: "Education", color: "#ffd166",
+      tag: "Learning at your pace",
+      short: "Personal tutors that adapt to you, instant feedback and lessons that rebuild themselves around your gaps.",
+      desc: "Adaptive learning systems track every answer you give and reshape the next question. The result is a tutor that never gets impatient and never moves on until you do.",
+      list: [
+        "Adaptive exercise engines that re-teach the exact concept you fumbled.",
+        "Instant, explained feedback on essays, code and maths problems.",
+        "Live translation and captions opening lectures in any language.",
+        "Lesson plans generated for a teacher in seconds, then human-edited."
+      ],
+      stat: "<b>24/7</b> — help available at the moment curiosity strikes, not just in class."
+    },
+    {
+      id: "transportation",
+      icon: "🚗", title: "Transportation", color: "#7dff9b",
+      tag: "Getting there smarter",
+      short: "Route prediction, traffic-light timing, driver assistance and the sensors behind autonomy.",
+      desc: "Every map app you open is an AI system: it ingests live traffic from millions of phones, forecasts congestion and picks the route that will still be fastest in fifteen minutes.",
+      list: [
+        "Navigation apps predicting arrival times from live traffic patterns.",
+        "Adaptive cruise control and lane keeping using cameras and radar.",
+        "Ride-hailing matching you to a driver with demand forecasting.",
+        "Transit systems adjusting frequency before the crowd arrives."
+      ],
+      stat: "<b>Minutes back</b> — smarter routing routinely shaves time off a daily commute."
+    },
+    {
+      id: "finance",
+      icon: "💰", title: "Finance", color: "#b48bff",
+      tag: "Trust every transaction",
+      short: "Fraud caught in milliseconds, smarter budgets and risk scored objectively.",
+      desc: "When your card is declined for a purchase you didn't make, a model scored hundreds of signals — amount, location, device, timing — in the few hundred milliseconds before approval.",
+      list: [
+        "Real-time fraud detection scoring every swipe against your habits.",
+        "Budget apps categorising transactions and forecasting the month ahead.",
+        "Credit scoring that weighs thousands of variables at once.",
+        "Algorithmic trading and risk modelling running continuously."
+      ],
+      stat: "<b>&lt;100 ms</b> — the window in which a fraud decision must be made."
+    }
+  ];
+
+  /* ---------------- tiny helpers ---------------- */
+  function $(s, c) { return (c || document).querySelector(s); }
+  function $$(s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); }
+
+  var toastEl = $("#toast"), toastTimer;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove("show"); }, 2200);
+  }
+
+  /* ---------------- accent colour plumbing ---------------- */
+  var ACCENTS = ["#4ff2ff", "#7dff9b", "#ffd166", "#ff6b9d", "#b48bff", "#8affc8"];
+  var accentIndex = 0;
+  var accentListeners = [];
+
+  function onAccent(fn) { accentListeners.push(fn); }
+  function setAccent(color, silent) {
+    document.documentElement.style.setProperty("--accent", color);
+    accentListeners.forEach(function (fn) { try { fn(color); } catch (e) {} });
+    if (!silent) toast("Glow colour updated ✨");
+  }
+
+  /* ---------------- build cards ---------------- */
+  var grid = $("#cardGrid");
+  SECTORS.forEach(function (s, i) {
+    var el = document.createElement("article");
+    el.className = "card reveal d" + (i % 4);
+    el.style.setProperty("--card-color", s.color);
+    el.setAttribute("role", "button");
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("aria-label", "Open details about " + s.title);
+    el.dataset.index = i;
+    el.innerHTML =
+      '<div class="card-icon">' + s.icon + '</div>' +
+      '<span class="card-tag">' + s.tag + '</span>' +
+      '<h3>' + s.title + '</h3>' +
+      '<p>' + s.short + '</p>' +
+      '<span class="card-go">Learn more →</span>';
+
+    // pointer-tracked glow
+    el.addEventListener("pointermove", function (e) {
+      var r = el.getBoundingClientRect();
+      el.style.setProperty("--mx", ((e.clientX - r.left) / r.width) * 100 + "%");
+      el.style.setProperty("--my", ((e.clientY - r.top) / r.height) * 100 + "%");
+    });
+    // recolour the globe while hovering
+    el.addEventListener("pointerenter", function () { setAccent(s.color, true); });
+    el.addEventListener("click", function () { openModal(i); });
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openModal(i); }
+    });
+    grid.appendChild(el);
+  });
+
+  /* ---------------- modal ---------------- */
+  var backdrop = $("#modalBackdrop"), modal = $("#modal"), lastFocus = null, currentIndex = 0;
+
+  function renderModal(i) {
+    var s = SECTORS[i];
+    currentIndex = i;
+    modal.style.setProperty("--modal-color", s.color);
+    $("#mIcon").textContent = s.icon;
+    $("#mTag").textContent = s.tag;
+    $("#modalTitle").textContent = s.title;
+    $("#mDesc").textContent = s.desc;
+    $("#mList").innerHTML = s.list.map(function (t) { return "<li>" + t + "</li>"; }).join("");
+    $("#mStat").innerHTML = s.stat;
+    setAccent(s.color, true);
+  }
+
+  function openModal(i) {
+    lastFocus = document.activeElement;
+    renderModal(i);
+    backdrop.classList.add("open");
+    document.body.style.overflow = "hidden";
+    $("#modalClose").focus();
+    toast(SECTORS[i].title + " · sector " + (i + 1) + "/" + SECTORS.length);
+  }
+
+  function closeModal() {
+    backdrop.classList.remove("open");
+    document.body.style.overflow = "";
+    if (lastFocus) lastFocus.focus();
+  }
+
+  $("#modalClose").addEventListener("click", closeModal);
+  $("#mCloseBtn").addEventListener("click", closeModal);
+  backdrop.addEventListener("click", function (e) { if (e.target === backdrop) closeModal(); });
+  $("#mNext").addEventListener("click", function () {
+    renderModal((currentIndex + 1) % SECTORS.length);
+    toast("Sector " + ((currentIndex + 1) % SECTORS.length + 1) + "/" + SECTORS.length);
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && backdrop.classList.contains("open")) closeModal();
+    // arrow navigation while the modal is open
+    if (backdrop.classList.contains("open") && (e.key === "ArrowRight" || e.key === "ArrowLeft")) {
+      e.preventDefault();
+      renderModal((currentIndex + (e.key === "ArrowRight" ? 1 : SECTORS.length - 1)) % SECTORS.length);
+    }
+  });
+
+  /* ---------------- navigation ---------------- */
+  var navToggle = $("#navToggle"), mainNav = $("#mainNav");
+  navToggle.addEventListener("click", function () {
+    var open = mainNav.classList.toggle("open");
+    navToggle.setAttribute("aria-expanded", String(open));
+    navToggle.textContent = open ? "✕" : "☰";
+  });
+  $$(".nav-link, .foot-links a[href^='#']").forEach(function (a) {
+    a.addEventListener("click", function () {
+      mainNav.classList.remove("open");
+      navToggle.setAttribute("aria-expanded", "false");
+      navToggle.textContent = "☰";
+    });
+  });
+
+  // active section highlight
+  var links = $$(".nav-link");
+  if ("IntersectionObserver" in window) {
+    var navObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        links.forEach(function (l) {
+          l.classList.toggle("active", l.getAttribute("href") === "#" + en.target.id);
+        });
+      });
+    }, { rootMargin: "-45% 0px -50% 0px", threshold: 0 });
+    ["home", "applications", "impact", "about"].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) navObserver.observe(el);
+    });
+
+    // reveal-on-scroll
+    var revObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) { en.target.classList.add("visible"); revObserver.unobserve(en.target); }
+      });
+    }, { threshold: 0.12 });
+    $$(".reveal").forEach(function (el) { revObserver.observe(el); });
+  } else {
+    $$(".reveal").forEach(function (el) { el.classList.add("visible"); });
+  }
+
+  /* ---------------- animated counters ---------------- */
+  var counted = false;
+  function runCounters() {
+    if (counted) return;
+    counted = true;
+    $$(".num").forEach(function (el) {
+      var to = parseFloat(el.dataset.to) || 0;
+      var dec = parseInt(el.dataset.dec || "0", 10);
+      var suffix = el.dataset.suffix || "";
+      var start = null, dur = 1500;
+      function step(ts) {
+        if (!start) start = ts;
+        var p = Math.min((ts - start) / dur, 1);
+        var eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = (to * eased).toFixed(dec) + (p === 1 ? suffix : "");
+        if (p < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    });
+  }
+  if ("IntersectionObserver" in window) {
+    var impact = document.getElementById("impact");
+    var statObserver = new IntersectionObserver(function (entries) {
+      if (entries[0].isIntersecting) { runCounters(); statObserver.disconnect(); }
+    }, { threshold: 0.35 });
+    if (impact) statObserver.observe(impact);
+  } else { runCounters(); }
+
+  /* ---------------- hero + misc buttons ---------------- */
+  $("#btnExplore").addEventListener("click", function () {
+    document.getElementById("applications").scrollIntoView({ behavior: "smooth", block: "start" });
+    toast("Showing the 5 sectors 👇");
+  });
+
+  var spinPaused = false;
+  $("#btnSpin").addEventListener("click", function () {
+    spinPaused = !spinPaused;
+    this.textContent = spinPaused ? "▶ Resume globe" : "⏸ Pause globe";
+    this.setAttribute("aria-pressed", String(spinPaused));
+    this.classList.toggle("on", spinPaused);
+    window.dispatchEvent(new CustomEvent("globe:spin", { detail: { paused: spinPaused } }));
+    toast(spinPaused ? "Globe paused" : "Globe spinning again 🌍");
+  });
+
+  $("#btnAccent").addEventListener("click", function () {
+    accentIndex = (accentIndex + 1) % ACCENTS.length;
+    setAccent(ACCENTS[accentIndex]);
+  });
+
+  $("#btnRandomCard").addEventListener("click", function () {
+    openModal(Math.floor(Math.random() * SECTORS.length));
+  });
+
+  $("#btnBackTop2").addEventListener("click", function () {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  var toTop = $("#toTop");
+  toTop.addEventListener("click", function () { window.scrollTo({ top: 0, behavior: "smooth" }); });
+
+  var sceneEl = $("#scene");
+  function onScroll() {
+    var y = window.scrollY || window.pageYOffset;
+    toTop.classList.toggle("show", y > 600);
+    // fade the 3D background as content takes over
+    var fade = Math.max(0.3, 1 - y / (window.innerHeight * 0.9));
+    sceneEl.style.opacity = window.matchMedia("(min-width: 761px)").matches ? fade.toFixed(3) : "";
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  $("#year").textContent = new Date().getFullYear();
+
+  // expose a small API for the 3D module
+  window.AIDaily = {
+    onAccent: onAccent,
+    getAccent: function () { return ACCENTS[accentIndex]; },
+    toast: toast
+  };
+})();
+</script>
+
+<!-- ============================================================
+     3D SCENE (ES module + importmap)
+     ============================================================ -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+  const host = document.getElementById("scene");
+  const fallback = document.getElementById("scene-fallback");
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  try {
+    const THREE = await import("three");
+    const { OrbitControls } = await import("three/addons/controls/OrbitControls.js");
+    fallback.style.display = "none"; // WebGL version takes over
+    init(THREE, OrbitControls);
+  } catch (err) {
+    console.warn("Three.js failed to load, using CSS fallback globe.", err);
+    if (window.AIDaily) window.AIDaily.toast("3D mode unavailable — using flat fallback");
+  }
+
+  function init(THREE, OrbitControls) {
+    const api = window.AIDaily || { onAccent: () => {}, getAccent: () => "#4ff2ff" };
+    let accent = api.getAccent();
+
+    /* ---------- renderer / scene / camera ---------- */
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x000000, 0);
+    host.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 200);
+    camera.position.set(0, 0.6, 7.4);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.enablePan = false;
+    controls.enableZoom = false;    // keep native page scrolling / pinching intact
+    controls.minDistance = 4.4;
+    controls.maxDistance = 12;
+    controls.autoRotate = !reduceMotion;
+    controls.autoRotateSpeed = 0.55;
+    controls.rotateSpeed = 0.55;
+
+    // The canvas sits behind the content. On touch devices it must ignore
+    // pointers entirely so the page still scrolls; on desktop (fine pointer)
+    // the empty gutters pass through and you can drag to orbit the globe.
+    const finePointer = window.matchMedia("(pointer: fine)").matches;
+    host.classList.toggle("interactive", finePointer);
+
+    /* ---------- globe group ---------- */
+    const globe = new THREE.Group();
+    scene.add(globe);
+    // push the globe to the right so the hero copy stays readable
+    const isNarrow = () => window.innerWidth < 761;
+    const placeGlobe = () => { globe.position.x = isNarrow() ? 0 : 2.15; globe.position.y = isNarrow() ? -0.2 : 0.1; };
+    placeGlobe();
+
+    const R = 1.75;
+
+    // 1. wireframe sphere
+    const wireMat = new THREE.MeshBasicMaterial({
+      color: new THREE.Color(accent), wireframe: true, transparent: true, opacity: 0.34
+    });
+    const wire = new THREE.Mesh(new THREE.SphereGeometry(R, 40, 26), wireMat);
+    globe.add(wire);
+
+    // 2. dark inner core so the wireframe reads against it
+    const core = new THREE.Mesh(
+      new THREE.SphereGeometry(R * 0.985, 48, 32),
+      new THREE.MeshBasicMaterial({ color: 0x060a18, transparent: true, opacity: 0.92 })
+    );
+    globe.add(core);
+
+    // 3. glow / atmosphere shell
+    const glowUniforms = { glowColor: { value: new THREE.Color(accent) } };
+    const glow = new THREE.Mesh(
+      new THREE.SphereGeometry(R * 1.28, 48, 32),
+      new THREE.ShaderMaterial({
+        uniforms: glowUniforms,
+        vertexShader: `
+          varying vec3 vNormal;
+          void main() {
+            vNormal = normalize(normalMatrix * normal);
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }`,
+        fragmentShader: `
+          uniform vec3 glowColor;
+          varying vec3 vNormal;
+          void main() {
+            float i = pow(0.62 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.4);
+            gl_FragColor = vec4(glowColor, 1.0) * clamp(i, 0.0, 1.0);
+          }`,
+        blending: THREE.AdditiveBlending,
+        side: THREE.BackSide,
+        transparent: true,
+        depthWrite: false
+      })
+    );
+    globe.add(glow);
+
+    // 4. "cities" — points distributed over the surface (Fibonacci sphere)
+    const CITY_COUNT = 700;
+    const cityPos = new Float32Array(CITY_COUNT * 3);
+    const golden = Math.PI * (3 - Math.sqrt(5));
+    for (let i = 0; i < CITY_COUNT; i++) {
+      const y = 1 - (i / (CITY_COUNT - 1)) * 2;
+      const r = Math.sqrt(Math.max(0, 1 - y * y));
+      const theta = golden * i;
+      cityPos[i * 3] = Math.cos(theta) * r * R * 1.005;
+      cityPos[i * 3 + 1] = y * R * 1.005;
+      cityPos[i * 3 + 2] = Math.sin(theta) * r * R * 1.005;
+    }
+    const cityGeo = new THREE.BufferGeometry();
+    cityGeo.setAttribute("position", new THREE.BufferAttribute(cityPos, 3));
+    const cityMat = new THREE.PointsMaterial({
+      color: new THREE.Color(accent), size: 0.035, transparent: true, opacity: 0.9,
+      blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true
+    });
+    const cities = new THREE.Points(cityGeo, cityMat);
+    globe.add(cities);
+
+    // 5. connection arcs with travelling pulses
+    const arcMat = new THREE.LineBasicMaterial({
+      color: new THREE.Color(accent), transparent: true, opacity: 0.55,
+      blending: THREE.AdditiveBlending, depthWrite: false
+    });
+    const pulseMat = new THREE.PointsMaterial({
+      color: 0xffffff, size: 0.09, transparent: true, opacity: 0.95,
+      blending: THREE.AdditiveBlending, depthWrite: false
+    });
+    const arcs = [];
+    function randomOnSphere(rad) {
+      const u = Math.random(), v = Math.random();
+      const theta = 2 * Math.PI * u, phi = Math.acos(2 * v - 1);
+      return new THREE.Vector3(
+        rad * Math.sin(phi) * Math.cos(theta),
+        rad * Math.cos(phi),
+        rad * Math.sin(phi) * Math.sin(theta)
+      );
+    }
+    for (let a = 0; a < 7; a++) {
+      const p1 = randomOnSphere(R * 1.01);
+      const p2 = randomOnSphere(R * 1.01);
+      const mid = p1.clone().add(p2).multiplyScalar(0.5).normalize().multiplyScalar(R * (1.28 + Math.random() * 0.35));
+      const curve = new THREE.QuadraticBezierCurve3(p1, mid, p2);
+      const pts = curve.getPoints(50);
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      const line = new THREE.Line(geo, arcMat);
+      globe.add(line);
+
+      const pulseGeo = new THREE.BufferGeometry();
+      const pulseAttr = new THREE.BufferAttribute(new Float32Array(3), 3);
+      pulseGeo.setAttribute("position", pulseAttr);
+      const pulse = new THREE.Points(pulseGeo, pulseMat);
+      pulse.frustumCulled = false;
+      globe.add(pulse);
+      arcs.push({ curve, pulse, pulseAttr, t: Math.random(), speed: 0.10 + Math.random() * 0.16 });
+    }
+
+    // 6. atmosphere particles (drifting shell)
+    const P_COUNT = 1400;
+    const pPos = new Float32Array(P_COUNT * 3);
+    for (let i = 0; i < P_COUNT; i++) {
+      const v = randomOnSphere(2.1 + Math.random() * 2.6);
+      pPos[i * 3] = v.x; pPos[i * 3 + 1] = v.y; pPos[i * 3 + 2] = v.z;
+    }
+    const pGeo = new THREE.BufferGeometry();
+    pGeo.setAttribute("position", new THREE.BufferAttribute(pPos, 3));
+    const particleMat = new THREE.PointsMaterial({
+      color: new THREE.Color(accent), size: 0.045, transparent: true, opacity: 0.55,
+      blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true
+    });
+    const particles = new THREE.Points(pGeo, particleMat);
+    globe.add(particles);
+
+    // 7. starfield
+    const S_COUNT = 900;
+    const sPos = new Float32Array(S_COUNT * 3);
+    for (let i = 0; i < S_COUNT; i++) {
+      const v = randomOnSphere(26 + Math.random() * 34);
+      sPos[i * 3] = v.x; sPos[i * 3 + 1] = v.y; sPos[i * 3 + 2] = v.z;
+    }
+    const sGeo = new THREE.BufferGeometry();
+    sGeo.setAttribute("position", new THREE.BufferAttribute(sPos, 3));
+    const stars = new THREE.Points(sGeo, new THREE.PointsMaterial({
+      color: 0xbcd0ff, size: 0.16, transparent: true, opacity: 0.7, depthWrite: false
+    }));
+    scene.add(stars);
+
+    // 8. satellites on tilted orbits
+    const sats = [];
+    const orbitTilt = [
+      { rx: 0.0, rz: 0.35, ry: 0.0 },
+      { rx: 1.1, rz: -0.4, ry: 0.6 },
+      { rx: -0.7, rz: 0.9, ry: -0.5 }
+    ];
+    orbitTilt.forEach((t, i) => {
+      const ring = new THREE.Group();
+      ring.rotation.set(t.rx, t.ry, t.rz);
+      const rad = 2.35 + i * 0.28;
+      const ringMesh = new THREE.Mesh(
+        new THREE.TorusGeometry(rad, 0.006, 8, 140),
+        new THREE.MeshBasicMaterial({
+          color: new THREE.Color(accent), transparent: true, opacity: 0.32,
+          blending: THREE.AdditiveBlending, depthWrite: false
+        })
+      );
+      ring.add(ringMesh);
+      const sat = new THREE.Mesh(
+        new THREE.SphereGeometry(0.055, 12, 12),
+        new THREE.MeshBasicMaterial({ color: 0xffffff })
+      );
+      ring.add(sat);
+      globe.add(ring);
+      sats.push({ ring, sat, rad, angle: i * 2.1, speed: 0.32 + i * 0.13 });
+    });
+
+    /* ---------- accent colour sync ---------- */
+    const accentTargets = [wireMat, cityMat, arcMat, particleMat];
+    api.onAccent && api.onAccent((color) => {
+      accent = color;
+      const c = new THREE.Color(color);
+      accentTargets.forEach((m) => m.color.copy(c));
+      glowUniforms.glowColor.value.copy(c);
+      sats.forEach(({ ring }) => ring.children[0].material.color.copy(c));
+      document.documentElement.style.setProperty("--accent", color);
+    });
+
+    /* ---------- pause / resume spin ---------- */
+    let spinPaused = reduceMotion;
+    window.addEventListener("globe:spin", (e) => {
+      spinPaused = !!e.detail.paused;
+      controls.autoRotate = !spinPaused;
+    });
+
+    /* ---------- responsive ---------- */
+    function resize() {
+      const w = window.innerWidth, h = window.innerHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(w, h);
+      placeGlobe();
+      // on small screens the globe sits behind the copy — pull back a bit
+      if (isNarrow() && camera.position.length() < 8) camera.position.setLength(8.4);
+    }
+    window.addEventListener("resize", resize);
+    resize();
+
+    /* ---------- animate ---------- */
+    const clock = new THREE.Clock();
+    function animate() {
+      requestAnimationFrame(animate);
+      const dt = Math.min(clock.getDelta(), 0.05);
+      const t = clock.elapsedTime;
+
+      if (!spinPaused) {
+        wire.rotation.y += dt * 0.12;
+        core.rotation.y += dt * 0.12;
+        cities.rotation.y += dt * 0.12;
+        // arcs + pulses share the globe, animate their own travelling phase
+        arcs.forEach((a) => {
+          a.t = (a.t + dt * a.speed) % 1;
+          const p = a.curve.getPointAt(a.t);
+          a.pulseAttr.setXYZ(0, p.x, p.y, p.z);
+          a.pulseAttr.needsUpdate = true;
+        });
+        particles.rotation.y -= dt * 0.045;
+        particles.rotation.x = Math.sin(t * 0.12) * 0.06;
+        sats.forEach((s) => {
+          s.angle += dt * s.speed;
+          s.sat.position.set(Math.cos(s.angle) * s.rad, Math.sin(s.angle) * s.rad, 0);
+        });
+        stars.rotation.y += dt * 0.006;
+        glow.scale.setScalar(1 + Math.sin(t * 1.1) * 0.012);
+      }
+
+      // subtle parallax from the pointer
+      globe.rotation.x = pointer.y * 0.12 + Math.sin(t * 0.3) * 0.03;
+      globe.rotation.z = -pointer.x * 0.05;
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    /* ---------- pointer parallax (page-level, not canvas) ---------- */
+    const pointer = { x: 0, y: 0 };
+    window.addEventListener("pointermove", (e) => {
+      pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+      pointer.y = (e.clientY / window.innerHeight) * 2 - 1;
+    }, { passive: true });
+
+    animate();
+    console.log("%c🌍 AI in Daily Life · Three.js scene ready", "color:#4ff2ff;font-weight:bold");
+  }
+</script>
+</body>
+</html>
